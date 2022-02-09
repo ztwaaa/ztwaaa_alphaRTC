@@ -6,10 +6,11 @@
         },
         "receiver": {
             "enabled": true,
-            "listening_ip": "0.0.0.0",
+            "listening_ip": "127.0.0.1",
             "listening_port": 8000
         }
     },
+    "bwe_algo": "gcc",
     "bwe_feedback_duration": 200,
     "video_source": {
         "video_disabled": {

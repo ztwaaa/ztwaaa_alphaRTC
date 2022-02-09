@@ -82,6 +82,14 @@ void ReceiveSideCongestionController::WrappingBitrateEstimator::SetMinBitrate(
   min_bitrate_bps_ = min_bitrate_bps;
 }
 
+void ReceiveSideCongestionController::WrappingBitrateEstimator::SetSendPeriodicFeedback(bool send_periodic_feedback){
+
+}
+
+void ReceiveSideCongestionController::WrappingBitrateEstimator::OnBitrateChanged(int bitrate_bps){
+
+}
+
 void ReceiveSideCongestionController::WrappingBitrateEstimator::
     PickEstimatorFromHeader(const RTPHeader& header) {
   if (header.extension.hasAbsoluteSendTime) {
@@ -129,16 +137,28 @@ ReceiveSideCongestionController::ReceiveSideCongestionController(
     PacketRouter* packet_router,
     NetworkStateEstimator* network_state_estimator)
     : remote_bitrate_estimator_(packet_router, clock),
-      remote_estimator_proxy_(clock,
-                              packet_router,
-                              &field_trial_config_,
-                              network_state_estimator) {}
+      estimator_proxy_(clock,
+                      packet_router,
+                      &field_trial_config_,
+                      network_state_estimator),
+      gcc_remote_estimator_proxy_(clock,
+                      packet_router,
+                      &field_trial_config_,
+                      network_state_estimator)
+                      {
+                        if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(),"gcc") == 0){
+                          remote_estimator_proxy_ = &gcc_remote_estimator_proxy_;
+                        }
+                        else{
+                          remote_estimator_proxy_ = &estimator_proxy_;
+                        }
+                      }
 
 void ReceiveSideCongestionController::OnReceivedPacket(
     int64_t arrival_time_ms,
     size_t payload_size,
     const RTPHeader& header) {
-  remote_estimator_proxy_.IncomingPacket(arrival_time_ms, payload_size, header);
+  remote_estimator_proxy_->IncomingPacket(arrival_time_ms, payload_size, header);
   if (!header.extension.hasTransportSequenceNumber) {
     // Receive-side BWE.
     remote_bitrate_estimator_.IncomingPacket(arrival_time_ms, payload_size,
@@ -148,13 +168,13 @@ void ReceiveSideCongestionController::OnReceivedPacket(
 
 void ReceiveSideCongestionController::SetSendPeriodicFeedback(
     bool send_periodic_feedback) {
-  remote_estimator_proxy_.SetSendPeriodicFeedback(send_periodic_feedback);
+  remote_estimator_proxy_->SetSendPeriodicFeedback(send_periodic_feedback);
 }
 
 RemoteBitrateEstimator*
 ReceiveSideCongestionController::GetRemoteBitrateEstimator(bool send_side_bwe) {
   if (send_side_bwe) {
-    return &remote_estimator_proxy_;
+    return remote_estimator_proxy_;
   } else {
     return &remote_bitrate_estimator_;
   }
@@ -164,7 +184,7 @@ const RemoteBitrateEstimator*
 ReceiveSideCongestionController::GetRemoteBitrateEstimator(
     bool send_side_bwe) const {
   if (send_side_bwe) {
-    return &remote_estimator_proxy_;
+    return remote_estimator_proxy_;
   } else {
     return &remote_bitrate_estimator_;
   }
@@ -176,7 +196,7 @@ void ReceiveSideCongestionController::OnRttUpdate(int64_t avg_rtt_ms,
 }
 
 void ReceiveSideCongestionController::OnBitrateChanged(int bitrate_bps) {
-  remote_estimator_proxy_.OnBitrateChanged(bitrate_bps);
+  remote_estimator_proxy_->OnBitrateChanged(bitrate_bps);
 }
 
 int64_t ReceiveSideCongestionController::TimeUntilNextProcess() {

@@ -15,6 +15,8 @@
 
 #include "absl/strings/match.h"
 #include "absl/types/optional.h"
+// Add for enabling GCC
+#include "modules/congestion_controller/goog_cc/goog_cc_factory.h"
 // Revision for enabling AlphaCC and disabling GCC
 #include "api/transport/alpha_cc_factory.h"
 #include "api/transport/network_types.h"

@@ -268,4 +268,11 @@ void RemoteBitrateEstimatorSingleStream::SetMinBitrate(int min_bitrate_bps) {
   remote_rate_->SetMinBitrate(DataRate::BitsPerSec(min_bitrate_bps));
 }
 
+void RemoteBitrateEstimatorSingleStream::SetSendPeriodicFeedback(bool send_periodic_feedback){
+
+}
+
+void RemoteBitrateEstimatorSingleStream::OnBitrateChanged(int bitrate_bps){
+
+}
 }  // namespace webrtc

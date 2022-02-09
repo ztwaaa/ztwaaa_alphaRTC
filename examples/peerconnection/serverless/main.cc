@@ -118,8 +118,8 @@ class MainWindowMock : public MainWindow {
 };
 
 int main(int argc, char* argv[]) {
-  cmdinfer::init_socket(argv[2]);
-  if (argc != 3) {
+  
+  if (argc<2 || argc>3) {
     fprintf(stderr, "Usage: %s config_file\n", argv[0]);
     exit(EINVAL);
   }
@@ -134,15 +134,23 @@ int main(int argc, char* argv[]) {
 
   auto config = webrtc::GetAlphaCCConfig();
   std::unique_ptr<FileLogSink> sink;
+  std::cout<<config->onnx_model_path.c_str()<<std::endl;
+  std::cout<<argc<<std::endl;
+  if(config->onnx_model_path.empty() && argc==3){
+    std::cout<<"main init\n"<<std::endl;
+    cmdinfer::init_socket(argv[2]);
+  }
 
   if (config->save_log_to_file) {
     sink = std::make_unique<FileLogSink>(config->log_output_path);
   }
 
+  // webrtc::field_trial::InitFieldTrialsFromString(
+  //     "WebRTC-KeepAbsSendTimeExtension/Enabled/");  //  Config for
+  //                                                   //  hasAbsSendTimestamp in
+  //                                                   //  RTP Header extension
   webrtc::field_trial::InitFieldTrialsFromString(
-      "WebRTC-KeepAbsSendTimeExtension/Enabled/");  //  Config for
-                                                    //  hasAbsSendTimestamp in
-                                                    //  RTP Header extension
+      "WebRTC-Bwe-InjectedCongestionController/Enabled/");
 
 #ifdef WIN32
   rtc::WinsockInitializer win_sock_init;

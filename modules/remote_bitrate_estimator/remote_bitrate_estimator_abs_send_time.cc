@@ -428,4 +428,12 @@ void RemoteBitrateEstimatorAbsSendTime::SetMinBitrate(int min_bitrate_bps) {
   rtc::CritScope lock(&crit_);
   remote_rate_.SetMinBitrate(DataRate::BitsPerSec(min_bitrate_bps));
 }
+
+void RemoteBitrateEstimatorAbsSendTime::SetSendPeriodicFeedback(bool send_periodic_feedback){
+
+}
+
+void RemoteBitrateEstimatorAbsSendTime::OnBitrateChanged(int bitrate_bps){
+
+}
 }  // namespace webrtc

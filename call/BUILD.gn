@@ -167,6 +167,8 @@ rtc_library("rtp_sender") {
     "../modules/congestion_controller",
     "../modules/congestion_controller/rtp:control_handler",
     "../modules/congestion_controller/rtp:transport_feedback",
+    # #include "modules/congestion_controller/goog_cc/goog_cc_factory.h" in rtp_transport_controller_send
+    "../modules/congestion_controller/goog_cc:GCC",
     "../modules/pacing",
     "../modules/rtp_rtcp",
     "../modules/rtp_rtcp:rtp_rtcp_format",

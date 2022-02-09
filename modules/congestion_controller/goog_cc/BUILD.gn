@@ -16,6 +16,23 @@ config("bwe_test_logging") {
   }
 }
 
+# add for compile GCC
+rtc_library("GCC") {
+  sources = [
+    "goog_cc_factory.cc",
+    "goog_cc_factory.h",
+  ]
+  deps = [
+    "../../../api/transport:network_control",
+    "../../../api/transport:webrtc_key_value_config",
+    "../../../api/:network_state_predictor_api",
+    ":goog_cc",
+    "//third_party/abseil-cpp/absl/memory",
+    # "../../modules/congestion_controller/goog_cc",
+    "../../../rtc_base:deprecation",
+  ]
+}
+
 rtc_library("goog_cc") {
   configs += [ ":bwe_test_logging" ]
   sources = [
@@ -233,8 +250,10 @@ if (rtc_include_tests) {
       ":delay_based_bwe",
       ":estimators",
       ":goog_cc",
+      # add GCC
+      ":GCC",
       "../../../api/rtc_event_log",
-      "../../../api/transport:goog_cc",
+      # "../../../api/transport:goog_cc",
       "../../../api/transport:network_control",
       "../../../api/units:timestamp",
       "../../../rtc_base:checks",
@@ -265,12 +284,13 @@ if (rtc_include_tests) {
       ":delay_based_bwe",
       ":estimators",
       ":goog_cc",
+      ":GCC",
       ":loss_based_controller",
       ":probe_controller",
       ":pushback_controller",
       "../../../api/rtc_event_log",
       "../../../api/transport:field_trial_based_config",
-      "../../../api/transport:goog_cc",
+      # "../../../api/transport:goog_cc",
       "../../../api/transport:network_control",
       "../../../api/transport:webrtc_key_value_config",
       "../../../api/units:data_rate",

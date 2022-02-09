@@ -76,6 +76,9 @@ class RemoteBitrateEstimator : public CallStatsObserver, public Module {
 
   virtual void SetMinBitrate(int min_bitrate_bps) = 0;
 
+  virtual void SetSendPeriodicFeedback(bool send_periodic_feedback) = 0;
+  virtual void OnBitrateChanged(int bitrate_bps) = 0;
+
  protected:
   static const int64_t kProcessIntervalMs = 500;
   static const int64_t kStreamTimeOutMs = 2000;

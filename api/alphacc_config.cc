@@ -66,6 +66,9 @@ bool ParseAlphaCCConfig(const std::string& file_path) {
   second.clear();
 
   RETURN_ON_FAIL(
+      GetString(top, "bwe_algo", &config->bwe_algo));
+
+  RETURN_ON_FAIL(
       GetInt(top, "bwe_feedback_duration", &config->bwe_feedback_duration_ms));
 
   if (GetValue(top, "onnx", &second)) {

@@ -3,13 +3,14 @@
         "autoclose": 20,
         "sender": {
             "enabled": true,
-            "dest_ip": "0.0.0.0",
+            "dest_ip": "127.0.0.1",
             "dest_port": 8000
         },
         "receiver": {
             "enabled": false
         }
     },
+    "bwe_algo": "gcc",
     "bwe_feedback_duration": 200,
     "video_source": {
         "video_disabled": {

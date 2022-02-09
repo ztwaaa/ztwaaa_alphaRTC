@@ -56,6 +56,8 @@ if (!build_with_chromium) {
       "audio_codecs:audio_codecs_api",
       "task_queue:default_task_queue_factory",
       "video_codecs:video_codecs_api",
+      # #include "modules/congestion_controller/goog_cc/goog_cc_factory.h" in create_peerconnection_factory.h
+      "../modules/congestion_controller/goog_cc:GCC",
     ]
   }
 }

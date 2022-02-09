@@ -41,6 +41,8 @@ struct AlphaCCConfig {
   std::string listening_ip;
   int listening_port = 0;
 
+  std::string bwe_algo;
+
   int bwe_feedback_duration_ms = 0;
   std::string onnx_model_path;
 

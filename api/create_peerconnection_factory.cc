@@ -23,6 +23,7 @@
 #include "modules/audio_device/include/audio_device.h"
 #include "modules/audio_processing/include/audio_processing.h"
 #include "rtc_base/thread.h"
+#include "modules/congestion_controller/goog_cc/goog_cc_factory.h"
 
 namespace webrtc {
 
@@ -45,6 +46,10 @@ rtc::scoped_refptr<PeerConnectionFactoryInterface> CreatePeerConnectionFactory(
   dependencies.call_factory = CreateCallFactory();
   dependencies.event_log_factory = std::make_unique<RtcEventLogFactory>(
       dependencies.task_queue_factory.get());
+
+  // add inject GCC
+  dependencies.network_controller_factory = 
+    std::make_unique<GoogCcNetworkControllerFactory>(dependencies.network_state_predictor_factory.get());
 
   cricket::MediaEngineDependencies media_dependencies;
   media_dependencies.task_queue_factory = dependencies.task_queue_factory.get();

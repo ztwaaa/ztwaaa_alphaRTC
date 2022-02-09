@@ -47,6 +47,9 @@ class RemoteBitrateEstimatorSingleStream : public RemoteBitrateEstimator {
   bool LatestEstimate(std::vector<uint32_t>* ssrcs,
                       uint32_t* bitrate_bps) const override;
   void SetMinBitrate(int min_bitrate_bps) override;
+  
+  void SetSendPeriodicFeedback(bool send_periodic_feedback) override;
+  void OnBitrateChanged(int bitrate_bps) override;
 
  private:
   struct Detector;

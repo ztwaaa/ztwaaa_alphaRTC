@@ -8,8 +8,8 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#ifndef MODULES_REMOTE_BITRATE_ESTIMATOR_REMOTE_ESTIMATOR_PROXY_H_
-#define MODULES_REMOTE_BITRATE_ESTIMATOR_REMOTE_ESTIMATOR_PROXY_H_
+#ifndef MODULES_REMOTE_BITRATE_GCC_ESTIMATOR_REMOTE_ESTIMATOR_PROXY_H_
+#define MODULES_REMOTE_BITRATE_GCC_ESTIMATOR_REMOTE_ESTIMATOR_PROXY_H_
 
 #include <map>
 #include <vector>
@@ -17,11 +17,9 @@
 #include "api/transport/network_control.h"
 #include "api/transport/webrtc_key_value_config.h"
 #include "modules/remote_bitrate_estimator/include/remote_bitrate_estimator.h"
-#include "modules/third_party/onnxinfer/ONNXInferInterface.h"
 #include "rtc_base/critical_section.h"
 #include "rtc_base/experiments/field_trial_parser.h"
 #include "rtc_base/numerics/sequence_number_util.h"
-#include "modules/third_party/statcollect/StatCollect.h"
 
 namespace webrtc {
 
@@ -35,13 +33,13 @@ class TransportFeedback;
 // receive side. It buffers a number of receive timestamps and then sends
 // transport feedback messages back too the send side.
 
-class RemoteEstimatorProxy : public RemoteBitrateEstimator {
+class GccRemoteEstimatorProxy : public RemoteBitrateEstimator {
  public:
-  RemoteEstimatorProxy(Clock* clock,
+  GccRemoteEstimatorProxy(Clock* clock,
                        TransportFeedbackSenderInterface* feedback_sender,
                        const WebRtcKeyValueConfig* key_value_config,
                        NetworkStateEstimator* network_state_estimator);
-  ~RemoteEstimatorProxy() override;
+  ~GccRemoteEstimatorProxy() override;
 
   void IncomingPacket(int64_t arrival_time_ms,
                       size_t payload_size,
@@ -74,20 +72,12 @@ class RemoteEstimatorProxy : public RemoteBitrateEstimator {
   };
 
   static const int kMaxNumberOfPackets;
-  void OnPacketArrival(uint16_t sequence_number,
-                       int64_t arrival_time,
-                       absl::optional<FeedbackRequest> feedback_request)
-      RTC_EXCLUSIVE_LOCKS_REQUIRED(&lock_);
+
   void SendPeriodicFeedbacks() RTC_EXCLUSIVE_LOCKS_REQUIRED(&lock_);
   void SendFeedbackOnRequest(int64_t sequence_number,
                              const FeedbackRequest& feedback_request)
       RTC_EXCLUSIVE_LOCKS_REQUIRED(&lock_);
-
-  void SendbackBweEstimation(const BweMessage& bwe_message)
-      RTC_EXCLUSIVE_LOCKS_REQUIRED(&lock_);
-  bool TimeToSendBweMessage() RTC_EXCLUSIVE_LOCKS_REQUIRED(&lock_);
-
-  int64_t BuildFeedbackPacket(
+  static int64_t BuildFeedbackPacket(
       uint8_t feedback_packet_count,
       uint32_t media_ssrc,
       int64_t base_sequence_number,
@@ -96,9 +86,6 @@ class RemoteEstimatorProxy : public RemoteBitrateEstimator {
       std::map<int64_t, int64_t>::const_iterator
           end_iterator,  // |end_iterator| is exclusive.
       rtcp::TransportFeedback* feedback_packet);
-
-  uint32_t GetTtimeFromAbsSendtime(uint32_t absoluteSendTime)
-      RTC_EXCLUSIVE_LOCKS_REQUIRED(&lock_);
 
   Clock* const clock_;
   TransportFeedbackSenderInterface* const feedback_sender_;
@@ -118,15 +105,9 @@ class RemoteEstimatorProxy : public RemoteBitrateEstimator {
   int64_t send_interval_ms_ RTC_GUARDED_BY(&lock_);
   bool send_periodic_feedback_ RTC_GUARDED_BY(&lock_);
 
-  // Bandwidth estimation sending back
-  int64_t bwe_sendback_interval_ms_ RTC_GUARDED_BY(&lock_);
-  int64_t last_bwe_sendback_ms_ RTC_GUARDED_BY(&lock_);
-
-  // StatCollect moudule
-  StatCollect::StatsCollectModule stats_collect_;
-  int cycles_ RTC_GUARDED_BY(&lock_);
-  uint32_t max_abs_send_time_ RTC_GUARDED_BY(&lock_);
-  void* onnx_infer_;
+  // Unwraps absolute send times.
+  uint32_t previous_abs_send_time_ RTC_GUARDED_BY(&lock_);
+  Timestamp abs_send_timestamp_ RTC_GUARDED_BY(&lock_);
 };
 
 }  // namespace webrtc

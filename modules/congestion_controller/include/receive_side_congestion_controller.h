@@ -18,6 +18,7 @@
 #include "api/transport/network_control.h"
 #include "modules/include/module.h"
 #include "modules/remote_bitrate_estimator/remote_estimator_proxy.h"
+#include "modules/remote_bitrate_estimator/gcc_remote_estimator_proxy.h"
 #include "rtc_base/constructor_magic.h"
 #include "rtc_base/critical_section.h"
 
@@ -84,6 +85,9 @@ class ReceiveSideCongestionController : public CallStatsObserver,
                         unsigned int* bitrate_bps) const override;
 
     void SetMinBitrate(int min_bitrate_bps) override;
+     
+    void SetSendPeriodicFeedback(bool send_periodic_feedback) override;
+    void OnBitrateChanged(int bitrate_bps) override;
 
    private:
     void PickEstimatorFromHeader(const RTPHeader& header)
@@ -102,7 +106,9 @@ class ReceiveSideCongestionController : public CallStatsObserver,
 
   const FieldTrialBasedConfig field_trial_config_;
   WrappingBitrateEstimator remote_bitrate_estimator_;
-  RemoteEstimatorProxy remote_estimator_proxy_;
+  RemoteEstimatorProxy estimator_proxy_;
+  GccRemoteEstimatorProxy gcc_remote_estimator_proxy_;
+  RemoteBitrateEstimator* remote_estimator_proxy_;
 };
 
 }  // namespace webrtc
