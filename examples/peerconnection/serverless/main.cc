@@ -145,12 +145,15 @@ int main(int argc, char* argv[]) {
     sink = std::make_unique<FileLogSink>(config->log_output_path);
   }
 
-  // webrtc::field_trial::InitFieldTrialsFromString(
-  //     "WebRTC-KeepAbsSendTimeExtension/Enabled/");  //  Config for
-  //                                                   //  hasAbsSendTimestamp in
-  //                                                   //  RTP Header extension
   webrtc::field_trial::InitFieldTrialsFromString(
+      "WebRTC-KeepAbsSendTimeExtension/Enabled/");  //  Config for
+                                                    //  hasAbsSendTimestamp in
+                                                    //  RTP Header extension
+
+  if (strcmp(config->bwe_algo.c_str(), "default") != 0){
+    webrtc::field_trial::InitFieldTrialsFromString(
       "WebRTC-Bwe-InjectedCongestionController/Enabled/");
+  }
 
 #ifdef WIN32
   rtc::WinsockInitializer win_sock_init;

@@ -13,6 +13,7 @@
 #include <memory>
 #include <utility>
 
+#include "api/alphacc_config.h"
 #include "api/call/call_factory_interface.h"
 #include "api/peer_connection_interface.h"
 #include "api/rtc_event_log/rtc_event_log_factory.h"
@@ -48,8 +49,10 @@ rtc::scoped_refptr<PeerConnectionFactoryInterface> CreatePeerConnectionFactory(
       dependencies.task_queue_factory.get());
 
   // add inject GCC
-  dependencies.network_controller_factory = 
+  if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(), "gcc") == 0){
+    dependencies.network_controller_factory = 
     std::make_unique<GoogCcNetworkControllerFactory>(dependencies.network_state_predictor_factory.get());
+  }
 
   cricket::MediaEngineDependencies media_dependencies;
   media_dependencies.task_queue_factory = dependencies.task_queue_factory.get();
