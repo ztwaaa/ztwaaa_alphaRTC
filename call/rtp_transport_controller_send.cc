@@ -31,6 +31,16 @@
 #include "rtc_base/logging.h"
 #include "rtc_base/rate_limiter.h"
 
+#ifdef _WIN32
+#include<windows.h>
+#include<winsock2.h>
+#pragma comment(lib,"ws2_32.lib")
+#else
+#include<linux/socket.h>
+#endif
+/*RL socket*/
+extern SOCKET RL_Socket;
+
 namespace webrtc {
 namespace {
 static const int64_t kRetransmitWindowSizeMs = 500;
@@ -602,6 +612,10 @@ void RtpTransportControllerSend::MaybeCreateControllers() {
     controller_ = controller_factory_fallback_->Create(initial_config_);
     process_interval_ = controller_factory_fallback_->GetProcessInterval();
   }
+  /*新增*/
+  //初始化RL_socket
+  std::unique_ptr<RLBasedBwe> rl_based_bwe_ = std::make_unique<RLBasedBwe>();
+  rl_based_bwe_->RLSocketInit(RL_Socket);
   UpdateControllerWithTimeInterval();
   StartProcessPeriodicTasks();
 }

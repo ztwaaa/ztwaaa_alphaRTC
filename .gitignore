@@ -83,3 +83,6 @@ src/
 /runtime/outaudio.wav
 /runtime/outvideo.yuv
 /runtime/webrtc.log
+modules/third_party/ev_server/sockclient.exe
+modules/third_party/ev_server/ev_socket
+.gitignore

@@ -31,6 +31,19 @@
 #include "rtc_base/checks.h"
 #include "rtc_base/logging.h"
 
+#include "modules/congestion_controller/goog_cc/rl_based_bwe.h"
+// #include "call/rtp_transport_controller_send.h"
+
+#ifdef _WIN32
+#include<windows.h>
+#include<winsock2.h>
+#pragma comment(lib,"ws2_32.lib")
+#else
+#include<linux/socket.h>
+#endif
+/*RL socket*/
+extern SOCKET RL_Socket;
+
 namespace webrtc {
 
 namespace {
@@ -404,6 +417,8 @@ void GoogCcNetworkController::UpdateCongestionWindowSize() {
 
 NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
     TransportPacketsFeedback report) {
+  std::unique_ptr<RLBasedBwe> rl_based_bwe_ = std::make_unique<RLBasedBwe>();
+
   if (report.packet_feedbacks.empty()) {
     // TODO(bugs.webrtc.org/10125): Design a better mechanism to safe-guard
     // against building very large network queues.
@@ -479,6 +494,9 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   absl::optional<int64_t> alr_start_time =
       alr_detector_->GetApplicationLimitedRegionStartTime();
 
+  /*new*/
+  rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
+
   if (previously_in_alr_ && !alr_start_time.has_value()) {
     int64_t now_ms = report.feedback_time.ms();
     acknowledged_bitrate_estimator_->SetAlrEndedTime(report.feedback_time);
@@ -541,6 +559,12 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
       report, acknowledged_bitrate, probe_bitrate, estimate_,
       alr_start_time.has_value());
 
+
+  /*new*/
+  rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);
+  result = toDelayBasedResult(rl_based_bwe_->rl_result);
+  /*end*/
+  
   if (result.updated) {
     if (result.probe) {
       bandwidth_estimation_->SetSendBitrate(result.target_bitrate,

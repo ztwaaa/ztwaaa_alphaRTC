@@ -70,6 +70,18 @@ rtc_library("goog_cc") {
     "../../remote_bitrate_estimator",
     "//third_party/abseil-cpp/absl/strings",
     "//third_party/abseil-cpp/absl/types:optional",
+    ":rl_based_bwe",
+  ]
+}
+
+rtc_source_set("rl_based_bwe") {
+  sources = [
+    "rl_based_bwe.cc",
+    "rl_based_bwe.h",
+  ]
+  deps = [
+    "../../../api/units:data_rate",
+    ":delay_based_bwe",
   ]
 }
 
