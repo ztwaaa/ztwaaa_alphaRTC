@@ -8,12 +8,13 @@
 #else
 #include<linux/socket.h>
 #endif
+
 /*RL socket*/
-extern SOCKET RL_Socket;
+SOCKET RL_Socket;
 
 namespace webrtc{
 RLBasedBwe::RLBasedBwe():rl_packet_(),rl_result(){}
-int RLBasedBwe::RLSocketInit(SOCKET RL_socket){
+int RLBasedBwe::RLSocketInit(SOCKET& RL_socket){
     struct sockaddr_in server_in; 
     WORD socket_version;
     WSADATA wsadata; 

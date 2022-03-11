@@ -41,8 +41,6 @@
 #else
 #include<linux/socket.h>
 #endif
-/*RL socket*/
-extern SOCKET RL_Socket;
 
 namespace webrtc {
 
