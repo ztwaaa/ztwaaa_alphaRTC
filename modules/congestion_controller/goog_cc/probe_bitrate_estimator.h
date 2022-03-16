@@ -18,6 +18,9 @@
 #include "api/transport/network_types.h"
 #include "api/units/data_rate.h"
 
+extern float send_rate_last_time;
+extern float send_rate_now;
+extern float recv_rate_now;
 namespace webrtc {
 class RtcEventLog;
 

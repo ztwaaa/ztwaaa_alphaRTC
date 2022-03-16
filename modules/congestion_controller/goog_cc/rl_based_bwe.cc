@@ -1,14 +1,14 @@
 #include "modules/congestion_controller/goog_cc/rl_based_bwe.h"
 #include "modules/congestion_controller/goog_cc/delay_based_bwe.h"
-
+#include "rtc_base/logging.h"
+#include<cstring>
 #ifdef _WIN32
-#include <windows.h>
-#include <winsock2.h>
+#include<windows.h>
+#include<winsock2.h>
 #pragma comment(lib,"ws2_32.lib")
 #else
 #include<linux/socket.h>
 #endif
-
 /*RL socket*/
 SOCKET RL_Socket;
 
@@ -23,7 +23,8 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket){
     socket_version = MAKEWORD(2,2);
     if(WSAStartup(socket_version, &wsadata) != 0)
     {
-        printf("WSAStartup error!");
+        //printf("WSAStartup error!");
+        RTC_LOG(LS_INFO) << "socket WSAStartup error";
         system("pause");
         return 0;
     }
@@ -31,37 +32,54 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket){
     RL_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(RL_socket == INVALID_SOCKET)
     {
-        printf("invalid socket !");
+        //printf("invalid socket !");
+        RTC_LOG(LS_INFO) << "invalid socket !";
         system("pause");
         return 1;
     }
     ret = ioctlsocket(RL_socket,FIONBIO,(unsigned long *)&ul);
     if(ret == SOCKET_ERROR){
-        printf("setting error!!");
+        //printf("setting error!!");
+        RTC_LOG(LS_INFO) << "socket setting error!!";
         exit(1);
     }
     server_in.sin_family = AF_INET;    //IPV4协议族
-    server_in.sin_port = htons(5000);  //服务器的端口号
+    server_in.sin_port = htons(5001);  //服务器的端口号
     server_in.sin_addr.S_un.S_addr = inet_addr("127.0.0.1"); //服务IP
-    if(connect(RL_socket, (struct sockaddr *)&server_in, sizeof(server_in)) == SOCKET_ERROR)
+    while(connect(RL_socket, (struct sockaddr *)&server_in, sizeof(server_in)) == SOCKET_ERROR)
     {
-        printf("connect error\n");
-        system("pause");
-        return 1;
-    }else{}
+        //printf("connect error\n");
+        RTC_LOG(LS_INFO) << "socket connect error\n";
+        int err=WSAGetLastError();
+        RTC_LOG(LS_INFO) << "socket-err-code" << err;
+        if(err!=10035)
+            break;
+        //system("pause");
+        //return 1;
+    }
 
-    printf("connect %s:%d\n", inet_ntoa(server_in.sin_addr), server_in.sin_port);
+    //printf("connect %s:%d\n", inet_ntoa(server_in.sin_addr), server_in.sin_port);
+    RTC_LOG(LS_INFO) << "socket connect "<< inet_ntoa(server_in.sin_addr) <<":"<< server_in.sin_port;
     return 0;
 }
 
 /*socket 模块可以在之前的模块上进行修改得来 为了展示不再详写*/
 void RLBasedBwe::SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket){
     //socket
-    int data_len = 6 * sizeof(float) + 5;
-    char* converted_data_ = (char*)malloc(data_len);
+    /*int data_len = 6 * sizeof(float) + 5;
+    char* converted_data_ = (char*)malloc(data_len+1);
     converted_data_ = DataConvert(data_packet_, converted_data_);
-    send(RL_socket,converted_data_,strlen(converted_data_),0);
+    RTC_LOG(LS_INFO) << "data to send:" << converted_data_;
+    RTC_LOG(LS_INFO) << "data length:" << strlen(converted_data_);
+    send(RL_socket,converted_data_,1024,0);
+    int err=WSAGetLastError();
+    RTC_LOG(LS_INFO) << "socket-err-code" << err;
     free(converted_data_);
+    converted_data_=NULL;*/
+    send(RL_socket,(char*)&data_packet_,sizeof(data_packet_),0);
+    RTC_LOG(LS_INFO) << "data to send:" << (char*)&data_packet_;
+    int err=WSAGetLastError();
+    RTC_LOG(LS_INFO) << "socket-err-code" << err;
     //exception  handle
     
     /*if(ret > 0)
@@ -87,9 +105,8 @@ void RLBasedBwe::SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket){
 
 float RLBasedBwe::RecvFromRL(SOCKET RL_socket){
     //get target_rate from RL
-    char recData[255];
+    char recData[1024];
     int ret,err;
-    float target_rate_float;
     ret = recv(RL_socket, recData, 255, 0);
     if(ret == SOCKET_ERROR){
         err = WSAGetLastError();
@@ -97,21 +114,25 @@ float RLBasedBwe::RecvFromRL(SOCKET RL_socket){
             return 0;
         }
         else if(err == WSAETIMEDOUT){
-            printf("Timeout!!");
+            //printf("Timeout!!");
+            RTC_LOG(LS_INFO) << "socket Timeout!!";
             exit(1);
         }
         else if(err == WSAENETDOWN){
-            printf("Connection lost!!");
+            //printf("Connection lost!!");
+            RTC_LOG(LS_INFO) << "socket Connection lost!!";
             exit(1);
         }
         else{
-            printf("Something error!!");
+            //printf("Something error!!");
+            RTC_LOG(LS_INFO) << "socket Something error!!";
             exit(1);
         }
     }
     else{
-        target_rate_float = std::atof(recData);
-        return target_rate_float;
+        int *target_rate_float = (int*)recData;
+        RTC_LOG(LS_INFO) << "recv data:" << *target_rate_float;
+        return (float)*target_rate_float;
     }
 }
 RLBasedBwe::DataPacket::DataPacket()
