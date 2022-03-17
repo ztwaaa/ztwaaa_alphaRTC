@@ -187,10 +187,13 @@ rtc_library("loss_based_controller") {
 }
 
 rtc_library("rl_based_bwe") {
-  configs += [ ":bwe_test_logging" ]
   sources = [
     "rl_based_bwe.cc",
     "rl_based_bwe.h",
+  ]
+  deps = [
+    "../../../api/units:data_rate",
+    ":delay_based_bwe",
   ]
 }
 
