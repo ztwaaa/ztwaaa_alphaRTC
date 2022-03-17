@@ -613,10 +613,7 @@ void RtpTransportControllerSend::MaybeCreateControllers() {
     controller_ = controller_factory_fallback_->Create(initial_config_);
     process_interval_ = controller_factory_fallback_->GetProcessInterval();
   }
-  /*新增*/
-  //初始化RL_socket
-  std::unique_ptr<RLBasedBwe> rl_based_bwe_ = std::make_unique<RLBasedBwe>();
-  rl_based_bwe_->RLSocketInit(RL_Socket);
+  
   UpdateControllerWithTimeInterval();
   StartProcessPeriodicTasks();
 }

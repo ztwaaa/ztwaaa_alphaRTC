@@ -2,7 +2,7 @@
 #include "iostream"
 #include "fstream"
 
-#define PORT 5001
+
 #define BUFFER_SIZE 1024
 #define MAX_CONNECTIONS 50
 
@@ -178,9 +178,9 @@ void socket_accept_callback(struct ev_loop *loop, struct ev_io *watcher, int rev
 
 
 
-int main() {
+int main(int argc, char* argv[]) {
 	struct ev_loop *loop = ev_default_loop(0);
-
+	int port = atoi(argv[1]);
 	/* socket start */
 	int sockfd;
 	struct sockaddr_in addr;
@@ -200,7 +200,7 @@ int main() {
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(PORT);	
+	addr.sin_port = htons(port);	
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 

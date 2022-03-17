@@ -14,7 +14,7 @@ SOCKET RL_Socket;
 
 namespace webrtc{
 RLBasedBwe::RLBasedBwe():rl_packet_(),rl_result(){}
-int RLBasedBwe::RLSocketInit(SOCKET& RL_socket){
+int RLBasedBwe::RLSocketInit(SOCKET& RL_socket,int port){
     struct sockaddr_in server_in; 
     WORD socket_version;
     WSADATA wsadata; 
@@ -44,7 +44,7 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket){
         exit(1);
     }
     server_in.sin_family = AF_INET;    //IPV4协议族
-    server_in.sin_port = htons(5001);  //服务器的端口号
+    server_in.sin_port = htons(port);  //服务器的端口号
     server_in.sin_addr.S_un.S_addr = inet_addr("127.0.0.1"); //服务IP
     while(connect(RL_socket, (struct sockaddr *)&server_in, sizeof(server_in)) == SOCKET_ERROR)
     {

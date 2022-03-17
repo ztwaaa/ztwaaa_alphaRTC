@@ -45,7 +45,7 @@ public:
     };
     DataPacket rl_packet_;
     Result rl_result;
-    int RLSocketInit(SOCKET& RL_socket);
+    int RLSocketInit(SOCKET& RL_socket,int port);
     Result FromRLModule(SOCKET RL_socket);
     void SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket);
     float RecvFromRL(SOCKET RL_socket);

@@ -14,13 +14,13 @@
     "bwe_feedback_duration": 200,
     "video_source": {
         "video_disabled": {
-            "enabled": true
+            "enabled": false
         },
         "webcam": {
             "enabled": false
         },
         "video_file": {
-            "enabled": false,
+            "enabled": true,
             "height": 240,
             "width": 320,
             "fps": 10,

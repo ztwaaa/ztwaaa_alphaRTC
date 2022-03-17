@@ -22,7 +22,7 @@
 #include "rtc_base/ssl_adapter.h"
 #include "rtc_base/string_utils.h"  // For ToUtf8
 #include "system_wrappers/include/field_trial.h"
-
+#include "modules/congestion_controller/goog_cc/rl_based_bwe.h"
 #include <chrono>
 #include <functional>
 #include <future>
@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 //新增
-#include <modules/third_party/cmdinfer/cmdinfer.h>
+//#include <modules/third_party/cmdinfer/cmdinfer.h>
 class VideoRenderer : public rtc::VideoSinkInterface<webrtc::VideoFrame> {
  public:
   VideoRenderer(webrtc::VideoTrackInterface* track_to_render,
@@ -125,6 +125,7 @@ int main(int argc, char* argv[]) {
   }
 
   const auto json_file_path = argv[1];
+  int port = atoi(argv[2]);
   if (!webrtc::ParseAlphaCCConfig(json_file_path)) {
     std::cerr << "bad config file" << std::endl;
     exit(EINVAL);
@@ -136,11 +137,14 @@ int main(int argc, char* argv[]) {
   std::unique_ptr<FileLogSink> sink;
   std::cout<<config->onnx_model_path.c_str()<<std::endl;
   std::cout<<argc<<std::endl;
-  if(config->onnx_model_path.empty() && argc==3){
+  /*if(config->onnx_model_path.empty() && argc==3){
     std::cout<<"main init\n"<<std::endl;
     cmdinfer::init_socket(argv[2]);
-  }
-
+  }*/
+  /*新增*/
+  //初始化RL_socket
+  std::unique_ptr<webrtc::RLBasedBwe> rl_based_bwe_ = std::make_unique<webrtc::RLBasedBwe>();
+  rl_based_bwe_->RLSocketInit(RL_Socket,port);
   if (config->save_log_to_file) {
     sink = std::make_unique<FileLogSink>(config->log_output_path);
   }
