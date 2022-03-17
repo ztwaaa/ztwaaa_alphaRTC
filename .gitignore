@@ -86,3 +86,6 @@ src/
 modules/third_party/ev_server/sockclient.exe
 modules/third_party/ev_server/ev_socket
 .gitignore
+*.bak
+runtime/ev_socket_5000
+runtime/ev_socket_5001
