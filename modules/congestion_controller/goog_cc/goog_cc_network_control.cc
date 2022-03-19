@@ -502,7 +502,7 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   rl_based_bwe_->rl_packet_.send_rate_last = send_rate_last_time;
 
   rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
-  RTC_LOG(LS_INFO) << "data sent";
+  //RTC_LOG(LS_INFO) << "data sent";
 
   if (previously_in_alr_ && !alr_start_time.has_value()) {
     int64_t now_ms = report.feedback_time.ms();

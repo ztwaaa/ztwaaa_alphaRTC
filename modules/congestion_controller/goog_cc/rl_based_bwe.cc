@@ -1,5 +1,6 @@
 #include "modules/congestion_controller/goog_cc/rl_based_bwe.h"
 #include "modules/congestion_controller/goog_cc/delay_based_bwe.h"
+#include "modules/third_party/statcollect/json.hpp"
 #include "rtc_base/logging.h"
 #include<cstring>
 #ifdef _WIN32
@@ -76,8 +77,19 @@ void RLBasedBwe::SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket){
     RTC_LOG(LS_INFO) << "socket-err-code" << err;
     free(converted_data_);
     converted_data_=NULL;*/
-    send(RL_socket,(char*)&data_packet_,sizeof(data_packet_),0);
+    /*send(RL_socket,(char*)&data_packet_,sizeof(data_packet_),0);
     RTC_LOG(LS_INFO) << "data to send:" << (char*)&data_packet_;
+    int err=WSAGetLastError();
+    RTC_LOG(LS_INFO) << "socket-err-code" << err;*/
+    char msg[256];
+    sprintf(msg,"RTT %f rn %f lps %f lr %f rr %f srl %f", data_packet_.RTT,
+                            data_packet_.retrans_num,
+                            data_packet_.lost_per_sec, 
+                            data_packet_.loss_rate,
+                            data_packet_.recv_rate,
+                            data_packet_.send_rate_last);
+    send(RL_socket,msg,strlen(msg),0);
+    RTC_LOG(LS_INFO) << "data to send:" << msg;
     int err=WSAGetLastError();
     RTC_LOG(LS_INFO) << "socket-err-code" << err;
     //exception  handle
@@ -105,9 +117,9 @@ void RLBasedBwe::SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket){
 
 float RLBasedBwe::RecvFromRL(SOCKET RL_socket){
     //get target_rate from RL
-    char recData[1024];
+    char recData[10]="";
     int ret,err;
-    ret = recv(RL_socket, recData, 255, 0);
+    ret = recv(RL_socket, recData, 9, 0);
     if(ret == SOCKET_ERROR){
         err = WSAGetLastError();
         if(err==WSAEWOULDBLOCK){
@@ -130,9 +142,10 @@ float RLBasedBwe::RecvFromRL(SOCKET RL_socket){
         }
     }
     else{
-        int *target_rate_float = (int*)recData;
-        RTC_LOG(LS_INFO) << "recv data:" << *target_rate_float;
-        return (float)*target_rate_float;
+        //float target_rate_float=0;
+        //sprintf(recData,"hello %f",target_rate_float);
+        RTC_LOG(LS_INFO) << "recv data:" << recData;
+        return 0;
     }
 }
 RLBasedBwe::DataPacket::DataPacket()
