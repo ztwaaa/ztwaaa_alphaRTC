@@ -61,7 +61,7 @@ class AlphaCcNetworkController : public NetworkControllerInterface {
   NetworkControlUpdate GetDefaultState(Timestamp at_time);
 
  private:
-  friend class AlphaCcStatePrinter;
+  friend class GoogCcStatePrinter;
   std::vector<ProbeClusterConfig> ResetConstraints(
       TargetRateConstraints new_constraints);
   void ClampConstraints();

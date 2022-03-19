@@ -31,8 +31,6 @@
 #include "rtc_base/logging.h"
 #include "rtc_base/rate_limiter.h"
 
-#include "modules/congestion_controller/goog_cc/rl_based_bwe.h"
-
 #ifdef _WIN32
 #include<windows.h>
 #include<winsock2.h>
@@ -40,8 +38,7 @@
 #else
 #include<linux/socket.h>
 #endif
-/*RL socket*/
-extern SOCKET RL_Socket;
+
 namespace webrtc {
 namespace {
 static const int64_t kRetransmitWindowSizeMs = 500;
