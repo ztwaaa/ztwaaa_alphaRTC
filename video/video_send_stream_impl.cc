@@ -656,5 +656,9 @@ uint32_t VideoSendStreamImpl::OnBitrateUpdated(BitrateAllocationUpdate update) {
   return protection_bitrate_bps;
 }
 
+uint32_t VideoSendStreamImpl::OnEncodedBitrateUpdated(BitrateAllocationUpdate update){
+  return encoder_target_rate_bps_;
+}
+
 }  // namespace internal
 }  // namespace webrtc

@@ -418,7 +418,7 @@ void GoogCcNetworkController::UpdateCongestionWindowSize() {
 NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
     TransportPacketsFeedback report) {
   std::unique_ptr<RLBasedBwe> rl_based_bwe_ = std::make_unique<RLBasedBwe>();
-
+  RTC_LOG(LS_INFO) << "OnTransportPacketsFeedback";
   if (report.packet_feedbacks.empty()) {
     // TODO(bugs.webrtc.org/10125): Design a better mechanism to safe-guard
     // against building very large network queues.
@@ -460,7 +460,7 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
       int64_t sum_rtt_ms = std::accumulate(feedback_max_rtts_.begin(),
                                            feedback_max_rtts_.end(), 0);
       int64_t mean_rtt_ms = sum_rtt_ms / feedback_max_rtts_.size();
-      rl_based_bwe_->rl_packet_.RTT = mean_rtt_ms;
+      // rl_based_bwe_->rl_packet_.RTT = mean_rtt_ms;
       if (delay_based_bwe_)
         delay_based_bwe_->OnRttUpdate(TimeDelta::Millis(mean_rtt_ms));
     }
@@ -488,7 +488,7 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
       bandwidth_estimation_->UpdatePacketsLost(
           lost_packets_since_last_loss_update_,
           expected_packets_since_last_loss_update_, report.feedback_time);
-      rl_based_bwe_->rl_packet_.loss_rate=  lost_packets_since_last_loss_update_/expected_packets_since_last_loss_update_;
+      // rl_based_bwe_->rl_packet_.loss_rate=  lost_packets_since_last_loss_update_/expected_packets_since_last_loss_update_;
       expected_packets_since_last_loss_update_ = 0;
       lost_packets_since_last_loss_update_ = 0;
     }
@@ -565,7 +565,18 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   result = delay_based_bwe_->IncomingPacketFeedbackVector(
       report, acknowledged_bitrate, probe_bitrate, estimate_,
       alr_start_time.has_value());
+  
+  RTC_LOG(LS_INFO) << "before rl_packet_";
 
+  // rl_based_bwe_->rl_packet_.send_rate_last = send_rate_last_time;
+  // rl_based_bwe_->rl_packet_.RTT = bandwidth_estimation_->round_trip_time().ms();
+  // rl_based_bwe_->rl_packet_.loss_rate = bandwidth_estimation_->fraction_loss();
+  rl_based_bwe_->rl_packet_.recv_rate = (*acknowledged_bitrate).kbps();
+  // rl_based_bwe_->rl_packet_.inter_packet_delay_ = delay_based_bwe_->get_recv_delta_ms()-delay_based_bwe_->get_send_delta_ms();
+  
+  // rl_based_bwe_->rl_packet_.recv_rate = recv_rate_now;
+  rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
+  RTC_LOG(LS_INFO) << "data sent";
 
   /*new*/
   rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);

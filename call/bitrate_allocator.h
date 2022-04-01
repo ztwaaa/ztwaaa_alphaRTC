@@ -36,6 +36,7 @@ class BitrateAllocatorObserver {
   // Returns the amount of protection used by the BitrateAllocatorObserver
   // implementation, as bitrate in bps.
   virtual uint32_t OnBitrateUpdated(BitrateAllocationUpdate update) = 0;
+  virtual uint32_t OnEncodedBitrateUpdated(BitrateAllocationUpdate update) = 0;
 
  protected:
   virtual ~BitrateAllocatorObserver() {}

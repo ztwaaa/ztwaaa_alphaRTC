@@ -112,6 +112,7 @@ class VideoSendStreamImpl : public webrtc::BitrateAllocatorObserver,
  private:
   // Implements BitrateAllocatorObserver.
   uint32_t OnBitrateUpdated(BitrateAllocationUpdate update) override;
+  uint32_t OnEncodedBitrateUpdated(BitrateAllocationUpdate update) override;
 
   void OnEncoderConfigurationChanged(
       std::vector<VideoStream> streams,

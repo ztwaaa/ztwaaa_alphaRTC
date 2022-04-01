@@ -21,6 +21,8 @@
 #include "api/units/timestamp.h"
 #include "rtc_base/deprecation.h"
 
+#include "call/video_send_stream.h"
+
 namespace webrtc {
 
 // Configuration
@@ -36,6 +38,9 @@ struct BitrateAllocationLimits {
   // The max bitrate to use for padding. The sum of the per-stream max padding
   // rate.
   DataRate max_padding_rate = DataRate::Zero();
+  // 增加编码等参数上报
+  VideoSendStream::Stats video_stats;
+
 };
 
 // Use StreamsConfig for information about streams that is required for specific

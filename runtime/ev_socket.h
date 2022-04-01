@@ -15,15 +15,16 @@
 struct DataPacket{
         DataPacket();
         DataPacket( float RTT,float lost_per_sec,
-                    float loss_rate,float recv_rate,
-                    float retrans_num,float send_rate_last);
+                    uint8_t loss_rate,float recv_rate,
+                    float retrans_num,float send_rate_last, float inter_packet_delay_);
         ~DataPacket() = default;
         float RTT;
         float lost_per_sec;
-        float loss_rate;
+        uint8_t loss_rate;
         float recv_rate;
         float retrans_num;
         float send_rate_last;
+        float inter_packet_delay_;
     };
 DataPacket::DataPacket()
     :   RTT(0),
@@ -31,17 +32,20 @@ DataPacket::DataPacket()
         loss_rate(0),
         recv_rate(0),
         retrans_num(0),
-        send_rate_last(0) {}
+        send_rate_last(0),
+        inter_packet_delay_(0) {}
 
 DataPacket::DataPacket( float RTT,float lost_per_sec,
-                                    float loss_rate,float recv_rate,
-                                    float retrans_num,float send_rate_last)
+                                    uint8_t loss_rate,float recv_rate,
+                                    float retrans_num,float send_rate_last,
+                                    float inter_packet_delay_)
     :   RTT(RTT),
         lost_per_sec(lost_per_sec),
         loss_rate(loss_rate),
         recv_rate(recv_rate),
         retrans_num(retrans_num),
-        send_rate_last(send_rate_last) {}
+        send_rate_last(send_rate_last),
+        inter_packet_delay_(inter_packet_delay_) {}
 #ifdef __cplusplus
 extern "C" {
 #endif
