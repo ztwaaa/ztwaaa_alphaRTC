@@ -36,6 +36,7 @@ class BitrateAllocatorObserver {
   // Returns the amount of protection used by the BitrateAllocatorObserver
   // implementation, as bitrate in bps.
   virtual uint32_t OnBitrateUpdated(BitrateAllocationUpdate update) = 0;
+  virtual int OnEncodedBitrateUpdated(BitrateAllocationUpdate update) = 0;
 
  protected:
   virtual ~BitrateAllocatorObserver() {}
@@ -163,6 +164,7 @@ class BitrateAllocator : public BitrateAllocatorInterface {
   int num_pause_events_ RTC_GUARDED_BY(&sequenced_checker_);
   int64_t last_bwe_log_time_ RTC_GUARDED_BY(&sequenced_checker_);
   BitrateAllocationLimits current_limits_ RTC_GUARDED_BY(&sequenced_checker_);
+  int video_send_statitics_ RTC_GUARDED_BY(&sequenced_checker_);
 };
 
 }  // namespace webrtc

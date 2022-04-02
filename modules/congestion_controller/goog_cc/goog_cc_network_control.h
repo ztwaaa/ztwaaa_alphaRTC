@@ -139,6 +139,8 @@ class GoogCcNetworkController : public NetworkControllerInterface {
   absl::optional<DataSize> current_data_window_;
 
   RTC_DISALLOW_IMPLICIT_CONSTRUCTORS(GoogCcNetworkController);
+
+  int last_send_video_stats_;
 };
 
 }  // namespace webrtc

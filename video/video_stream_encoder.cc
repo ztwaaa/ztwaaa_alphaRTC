@@ -1003,7 +1003,7 @@ VideoStreamEncoder::UpdateBitrateAllocationAndNotifyObserver(
                         << adjusted_allocation.ToString();
     new_rate_settings.rate_control.bitrate = adjusted_allocation;
   }
-
+  // VideoSendStreamImpl::OnBitrateAllocationUpdated
   encoder_stats_observer_->OnBitrateAllocationUpdated(
       send_codec_, new_rate_settings.rate_control.bitrate);
 

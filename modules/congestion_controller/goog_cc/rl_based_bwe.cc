@@ -82,7 +82,7 @@ void RLBasedBwe::SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket){
     int err=WSAGetLastError();
     RTC_LOG(LS_INFO) << "socket-err-code" << err;*/
     char msg[256];
-    sprintf(msg,"RTT %f rn %f lps %f lr %f rr %f srl %f", data_packet_.RTT,
+    sprintf(msg,"RTT %f rn %f lps %f lr %d rr %f srl %f", data_packet_.RTT,
                             data_packet_.retrans_num,
                             data_packet_.lost_per_sec, 
                             data_packet_.loss_rate,
@@ -154,17 +154,23 @@ RLBasedBwe::DataPacket::DataPacket()
         loss_rate(0),
         recv_rate(0),
         retrans_num(0),
-        send_rate_last(0) {}
+        send_rate_last(0),
+        inter_packet_delay_(0),
+        last_encoded_rate_(0) {}
 
 RLBasedBwe::DataPacket::DataPacket( float RTT,float lost_per_sec,
-                                    float loss_rate,float recv_rate,
-                                    float retrans_num,float send_rate_last)
+                                    uint8_t loss_rate,float recv_rate,
+                                    float retrans_num,float send_rate_last,
+                                    float inter_packet_delay,
+                                    int last_encoded_rate)
     :   RTT(RTT),
         lost_per_sec(lost_per_sec),
         loss_rate(loss_rate),
         recv_rate(recv_rate),
         retrans_num(retrans_num),
-        send_rate_last(send_rate_last) {}
+        send_rate_last(send_rate_last),
+        inter_packet_delay_(inter_packet_delay),
+        last_encoded_rate_(last_encoded_rate) {}
 
 RLBasedBwe::Result::Result()
     :   updated(false),
@@ -190,20 +196,22 @@ RLBasedBwe::Result RLBasedBwe::FromRLModule(SOCKET RL_socket){
     float target_rate_float;
     DataRate target_datarate = DataRate::Zero();
     target_rate_float = RecvFromRL(RL_socket);
-    target_datarate = webrtc::DataRate::BitsPerSec(target_rate_float);
+    target_datarate = webrtc::DataRate::KilobitsPerSec(target_rate_float);
     return (target_rate_float==0)?Result():Result(true, target_datarate);
 }
 
 char* RLBasedBwe::DataConvert(RLBasedBwe::DataPacket &data_packet_, char* converted_data_){
     int data_len = 6 * sizeof(float) + 5;
     if((isNotEmpty(data_packet_))&&(converted_data_!=NULL)){
-        sprintf(converted_data_,"%f_%f_%f_%f_%f_%f",
+        sprintf(converted_data_,"%f_%f_%d_%f_%f_%f_%f_%d",
         data_packet_.RTT,
         data_packet_.lost_per_sec,
         data_packet_.loss_rate,
         data_packet_.recv_rate,
         data_packet_.retrans_num,
-        data_packet_.send_rate_last
+        data_packet_.send_rate_last,
+        data_packet_.inter_packet_delay_,
+        data_packet_.last_encoded_rate_
         );
     }
     else {
@@ -217,7 +225,9 @@ bool RLBasedBwe::isNotEmpty(DataPacket &data_packet_){
         data_packet_.recv_rate == 0 &&
         data_packet_.retrans_num == 0 &&
         data_packet_.send_rate_last == 0 &&
-        data_packet_.RTT ==0
+        data_packet_.RTT ==0 && 
+        data_packet_.inter_packet_delay_ == 0 &&
+        data_packet_.last_encoded_rate_ == 0
     )
         return false;
     else 

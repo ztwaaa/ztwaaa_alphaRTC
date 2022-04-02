@@ -361,7 +361,8 @@ BitrateAllocator::BitrateAllocator(LimitObserver* limit_observer)
       last_rtt_(0),
       last_bwe_period_ms_(1000),
       num_pause_events_(0),
-      last_bwe_log_time_(0) {
+      last_bwe_log_time_(0),
+      video_send_statitics_(0) {
   sequenced_checker_.Detach();
 }
 
@@ -412,6 +413,8 @@ void BitrateAllocator::OnNetworkEstimateChanged(TargetTransferRate msg) {
     update.bwe_period = TimeDelta::Millis(last_bwe_period_ms_);
     update.cwnd_reduce_ratio = msg.cwnd_reduce_ratio;
     uint32_t protection_bitrate = config.observer->OnBitrateUpdated(update);
+    video_send_statitics_ = config.observer->OnEncodedBitrateUpdated(update);
+    RTC_LOG(LS_INFO) << "video_send_statitics_:" << video_send_statitics_;
 
     if (allocated_bitrate == 0 && config.allocated_bitrate_bps > 0) {
       if (last_target_bps_ > 0)
@@ -519,13 +522,16 @@ void BitrateAllocator::UpdateAllocationLimits() {
     return;
   }
   current_limits_ = limits;
+  limits.video_stats = video_send_statitics_;
 
   RTC_LOG(LS_INFO) << "UpdateAllocationLimits : total_requested_min_bitrate: "
                    << ToString(limits.min_allocatable_rate)
                    << ", total_requested_padding_bitrate: "
                    << ToString(limits.max_padding_rate)
                    << ", total_requested_max_bitrate: "
-                   << ToString(limits.max_allocatable_rate);
+                   << ToString(limits.max_allocatable_rate)
+                   << ", video actual encoded bitrate: "
+                   << limits.video_stats;
 
   limit_observer_->OnAllocationLimitsChanged(limits);
 }

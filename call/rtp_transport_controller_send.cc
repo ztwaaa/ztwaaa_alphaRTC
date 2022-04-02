@@ -239,6 +239,8 @@ void RtpTransportControllerSend::SetAllocatedSendBitrateLimits(
   streams_config_.min_total_allocated_bitrate = limits.min_allocatable_rate;
   streams_config_.max_padding_rate = limits.max_padding_rate;
   streams_config_.max_total_allocated_bitrate = limits.max_allocatable_rate;
+  streams_config_.video_stats = limits.video_stats;
+  RTC_LOG(LS_INFO) << "video_send_statitics_: " << streams_config_.video_stats;
   UpdateStreamsConfig();
 }
 void RtpTransportControllerSend::SetPacingFactor(float pacing_factor) {

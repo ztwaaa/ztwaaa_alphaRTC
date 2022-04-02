@@ -22,7 +22,7 @@
 #include "api/scoped_refptr.h"
 #include "api/video_codecs/video_codec.h"
 #include "call/rtp_transport_controller_send_interface.h"
-#include "call/video_send_stream.h"
+// #include "call/video_send_stream.h"
 #include "modules/pacing/paced_sender.h"
 #include "rtc_base/atomic_ops.h"
 #include "rtc_base/checks.h"
@@ -654,6 +654,13 @@ uint32_t VideoSendStreamImpl::OnBitrateUpdated(BitrateAllocationUpdate update) {
       update.round_trip_time.ms(), update.cwnd_reduce_ratio);
   stats_proxy_->OnSetEncoderTargetRate(encoder_target_rate_bps_);
   return protection_bitrate_bps;
+}
+
+int VideoSendStreamImpl::OnEncodedBitrateUpdated(BitrateAllocationUpdate update){
+  RTC_LOG(LS_INFO) << "VideoSendStreamImpl media_bitrate_bps:" << stats_proxy_->GetStats().media_bitrate_bps;
+  RTC_LOG(LS_INFO) << "VideoSendStreamImpl encoder_target_rate_bps_:" << encoder_target_rate_bps_;
+
+  return stats_proxy_->GetStats().media_bitrate_bps;
 }
 
 }  // namespace internal

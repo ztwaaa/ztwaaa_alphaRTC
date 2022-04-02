@@ -116,7 +116,9 @@ DelayBasedBwe::DelayBasedBwe(const WebRtcKeyValueConfig* key_value_config,
       prev_state_(BandwidthUsage::kBwNormal),
       alr_limited_backoff_enabled_(absl::StartsWith(
           key_value_config->Lookup("WebRTC-Bwe-AlrLimitedBackoff"),
-          "Enabled")) {
+          "Enabled")),
+      send_delta_ms_(0),
+      recv_delta_ms_(0) {
   RTC_LOG(LS_INFO) << "Initialized DelayBasedBwe with small packet filtering "
                    << ignore_small_.Parser()->Encode()
                    << ", separate audio overuse detection"
@@ -249,6 +251,8 @@ void DelayBasedBwe::IncomingPacketFeedback(const PacketResult& packet_feedback,
       timestamp, packet_feedback.receive_time.ms(), at_time.ms(),
       packet_size.bytes(), &timestamp_delta, &recv_delta_ms, &size_delta);
   double send_delta_ms = (1000.0 * timestamp_delta) / (1 << kInterArrivalShift);
+  recv_delta_ms_ = recv_delta_ms;
+  send_delta_ms_ = send_delta_ms;
   delay_detector_for_packet->Update(recv_delta_ms, send_delta_ms,
                                     packet_feedback.sent_packet.send_time.ms(),
                                     packet_feedback.receive_time.ms(),

@@ -23,15 +23,18 @@ public:
     struct DataPacket{
         DataPacket();
         DataPacket( float RTT,float lost_per_sec,
-                    float loss_rate,float recv_rate,
-                    float retrans_num,float send_rate_last);
+                    uint8_t loss_rate,float recv_rate,
+                    float retrans_num,float send_rate_last, float inter_packet_delay_,
+                    int last_encoded_rate_);
         ~DataPacket() = default;
         float RTT;
         float lost_per_sec;
-        float loss_rate;
+        uint8_t loss_rate;
         float recv_rate;
         float retrans_num;
         float send_rate_last;
+        float inter_packet_delay_;
+        int last_encoded_rate_;
     };
     struct Result {
         Result();

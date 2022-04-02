@@ -82,25 +82,31 @@ void socket_read_callback(struct ev_loop *loop, struct ev_io *watcher, int reven
 		return;
 	}
 	else {
-		printf("receive message:%s\n", buffer);
-		/*printf("recv buff from client!\nRTT:%f,\nlost_per_sec:%f,\nloss_rate:%f,\nrecv_rate:%f,\nretrans_num:%f\nsend_rate_last:%f\n", 
+		DataPacket* recv_info = (DataPacket*)buffer;
+		//printf("receive message:%s\n", buffer);
+		printf("recv buff from client!\nRTT:%f,\nlost_per_sec:%f,\nloss_rate:%d,\nrecv_rate:%f,\nretrans_num:%f\nsend_rate_last:%f\ninter_packet_delay_:%f\nlast_encoded_rate_:%d\n", 
 				recv_info->RTT,
 				recv_info->lost_per_sec,
 				recv_info->loss_rate,
 				recv_info->recv_rate,
 				recv_info->retrans_num,
-				recv_info->send_rate_last
+				recv_info->send_rate_last,
+				recv_info->inter_packet_delay_,
+				recv_info->last_encoded_rate_
 			);	
-		//fd_log 	<<  "recv buff from client! \n" 
+		fd_log 	<<  "recv buff from client! \n" 
 				<<  "RTT:" << recv_info->RTT << "\n"
 				<<  "lost_per_sec:" << recv_info->lost_per_sec << "\n"
 				<<  "loss_rate:" << recv_info->loss_rate << "\n"
 				<< 	"recv_rate:" << recv_info->recv_rate << "\n"
 				<<  "retrans_num:"  << recv_info->retrans_num  << "\n"
-				<<  "send_rate_last"  << recv_info->send_rate_last << "\n";*/
-		fd_log  <<  "recv buffer" << buffer;
+				<<  "send_rate_last"  << recv_info->send_rate_last << "\n"
+				<<  "inter_packet_delay_"  << recv_info->inter_packet_delay_ << "\n"
+				<<  "last_encoded_rate_"  << recv_info->last_encoded_rate_ << "\n";
+
+		//fd_log  <<  "recv buffer" << buffer;
 	}
-	int bitRes = 20;
+	int bitRes = 2000;
 	// socket send to client
 	send(watcher->fd, "20", sizeof(bitRes), 0);
 	// memset(send_buf, 0, sizeof(send_buf));

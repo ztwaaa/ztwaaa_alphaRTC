@@ -535,6 +535,10 @@ uint32_t AudioSendStream::OnBitrateUpdated(BitrateAllocationUpdate update) {
   return 0;
 }
 
+int AudioSendStream::OnEncodedBitrateUpdated(BitrateAllocationUpdate update) {
+  return -1;
+}
+
 void AudioSendStream::SetTransportOverhead(
     int transport_overhead_per_packet_bytes) {
   RTC_DCHECK(worker_thread_checker_.IsCurrent());

@@ -95,6 +95,8 @@ class DelayBasedBwe {
   DataRate TriggerOveruse(Timestamp at_time,
                           absl::optional<DataRate> link_capacity);
   DataRate last_estimate() const { return prev_bitrate_; }
+  uint64_t get_recv_delta_ms() {return recv_delta_ms_;}
+  float get_send_delta_ms() {return (float)send_delta_ms_;}
 
  private:
   friend class GoogCcStatePrinter;
@@ -144,6 +146,9 @@ class DelayBasedBwe {
   BandwidthUsage prev_state_;
   bool alr_limited_backoff_enabled_;
   RTC_DISALLOW_IMPLICIT_CONSTRUCTORS(DelayBasedBwe);
+
+  double send_delta_ms_;
+  int64_t recv_delta_ms_; 
 };
 
 }  // namespace webrtc
