@@ -80,12 +80,8 @@ src/
 .gclient_entries
 /runtime/*.wav
 /runtime/*.yuv
-/runtime/outaudio.wav
-/runtime/outvideo.yuv
-/runtime/webrtc.log
+/runtime/*.log
 modules/third_party/ev_server/sockclient.exe
-modules/third_party/ev_server/ev_socket
 .gitignore
 *.bak
-runtime/ev_socket_5000
-runtime/ev_socket_5001
+runtime/ev_server
