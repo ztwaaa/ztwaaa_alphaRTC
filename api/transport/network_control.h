@@ -27,6 +27,8 @@ class TargetTransferRateObserver {
   // Called to indicate target transfer rate as well as giving information about
   // the current estimate of network parameters.
   virtual void OnTargetTransferRate(TargetTransferRate) = 0;
+  // call to update rl_bwe_configs.
+  virtual void OnRlBweUpdateRate(RlBweConfig&) = 0;
   // Called to provide updates to the expected target rate in case it changes
   // before the first call to OnTargetTransferRate.
   virtual void OnStartRateUpdate(DataRate) {}
@@ -105,6 +107,7 @@ class NetworkControllerInterface {
       BweMessage) {
     return NetworkControlUpdate();
   }
+  virtual void OnRlBweConfig(RlBweConfig) = 0;
 };
 
 // NetworkControllerFactoryInterface is an interface for creating a network

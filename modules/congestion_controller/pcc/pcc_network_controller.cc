@@ -377,6 +377,11 @@ NetworkControlUpdate PccNetworkController::OnStreamsConfig(StreamsConfig msg) {
   return NetworkControlUpdate();
 }
 
+void PccNetworkController::OnRlBweConfig(RlBweConfig msg) {
+  return;
+}
+
+
 NetworkControlUpdate PccNetworkController::OnReceivedPacket(
     ReceivedPacket msg) {
   return NetworkControlUpdate();

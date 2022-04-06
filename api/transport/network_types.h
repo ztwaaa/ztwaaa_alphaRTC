@@ -59,6 +59,16 @@ struct StreamsConfig {
   absl::optional<DataRate> max_total_allocated_bitrate;
 };
 
+struct RlBweConfig {
+  RlBweConfig();
+  RlBweConfig(const RlBweConfig&);
+  ~RlBweConfig();
+  
+  Timestamp at_time = Timestamp::PlusInfinity();
+
+  int video_stats = 0;
+};
+
 struct TargetRateConstraints {
   TargetRateConstraints();
   TargetRateConstraints(const TargetRateConstraints&);

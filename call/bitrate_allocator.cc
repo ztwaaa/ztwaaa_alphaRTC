@@ -413,8 +413,11 @@ void BitrateAllocator::OnNetworkEstimateChanged(TargetTransferRate msg) {
     update.bwe_period = TimeDelta::Millis(last_bwe_period_ms_);
     update.cwnd_reduce_ratio = msg.cwnd_reduce_ratio;
     uint32_t protection_bitrate = config.observer->OnBitrateUpdated(update);
-    video_send_statitics_ = config.observer->OnEncodedBitrateUpdated(update);
-    RTC_LOG(LS_INFO) << "video_send_statitics_:" << video_send_statitics_;
+
+    if(config.observer->OnEncodedBitrateUpdated(update) > 0){
+      video_send_statitics_ = config.observer->OnEncodedBitrateUpdated(update);
+    }
+    RTC_LOG(LS_INFO) << "OnEncodedBitrateUpdated video_send_statitics_:" << video_send_statitics_;
 
     if (allocated_bitrate == 0 && config.allocated_bitrate_bps > 0) {
       if (last_target_bps_ > 0)

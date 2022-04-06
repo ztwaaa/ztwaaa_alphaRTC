@@ -59,6 +59,7 @@ class GoogCcNetworkController : public NetworkControllerInterface {
   NetworkControlUpdate OnSentPacket(SentPacket msg) override;
   NetworkControlUpdate OnReceivedPacket(ReceivedPacket msg) override;
   NetworkControlUpdate OnStreamsConfig(StreamsConfig msg) override;
+  void OnRlBweConfig(RlBweConfig msg) override;
   NetworkControlUpdate OnTargetRateConstraints(
       TargetRateConstraints msg) override;
   NetworkControlUpdate OnTransportLossReport(TransportLossReport msg) override;
@@ -68,6 +69,7 @@ class GoogCcNetworkController : public NetworkControllerInterface {
       NetworkStateEstimate msg) override;
 
   NetworkControlUpdate GetNetworkState(Timestamp at_time) const;
+  int last_send_video_stats_;
 
  private:
   friend class GoogCcStatePrinter;
@@ -139,8 +141,6 @@ class GoogCcNetworkController : public NetworkControllerInterface {
   absl::optional<DataSize> current_data_window_;
 
   RTC_DISALLOW_IMPLICIT_CONSTRUCTORS(GoogCcNetworkController);
-
-  int last_send_video_stats_;
 };
 
 }  // namespace webrtc

@@ -192,6 +192,10 @@ void RtpTransportControllerSend::UpdateControlState() {
   // We won't create control_handler_ until we have an observers.
   RTC_DCHECK(observer_ != nullptr);
   observer_->OnTargetTransferRate(*update);
+  observer_->OnRlBweUpdateRate(rl_bwe_config_);
+  if (controller_){
+    controller_->OnRlBweConfig(rl_bwe_config_);
+  }
 }
 
 RtpPacketPacer* RtpTransportControllerSend::pacer() {
@@ -240,7 +244,7 @@ void RtpTransportControllerSend::SetAllocatedSendBitrateLimits(
   streams_config_.max_padding_rate = limits.max_padding_rate;
   streams_config_.max_total_allocated_bitrate = limits.max_allocatable_rate;
   streams_config_.video_stats = limits.video_stats;
-  RTC_LOG(LS_INFO) << "video_send_statitics_: " << streams_config_.video_stats;
+  RTC_LOG(LS_INFO) << "SetAllocatedSendBitrateLimits video_send_statitics_: " << streams_config_.video_stats;
   UpdateStreamsConfig();
 }
 void RtpTransportControllerSend::SetPacingFactor(float pacing_factor) {

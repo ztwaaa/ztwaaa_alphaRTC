@@ -657,10 +657,12 @@ uint32_t VideoSendStreamImpl::OnBitrateUpdated(BitrateAllocationUpdate update) {
 }
 
 int VideoSendStreamImpl::OnEncodedBitrateUpdated(BitrateAllocationUpdate update){
-  RTC_LOG(LS_INFO) << "VideoSendStreamImpl media_bitrate_bps:" << stats_proxy_->GetStats().media_bitrate_bps;
-  RTC_LOG(LS_INFO) << "VideoSendStreamImpl encoder_target_rate_bps_:" << encoder_target_rate_bps_;
+  int res_media_bitrate_bps = stats_proxy_->GetStats().media_bitrate_bps;
+  int res_encoder_target_rate_bps_ = encoder_target_rate_bps_;
+  RTC_LOG(LS_INFO) << "VideoSendStreamImpl media_bitrate_bps:" << res_media_bitrate_bps;
+  RTC_LOG(LS_INFO) << "VideoSendStreamImpl encoder_target_rate_bps_:" << res_encoder_target_rate_bps_;
 
-  return stats_proxy_->GetStats().media_bitrate_bps;
+  return res_media_bitrate_bps;
 }
 
 }  // namespace internal

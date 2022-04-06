@@ -57,6 +57,7 @@ class AlphaCcNetworkController : public NetworkControllerInterface {
   NetworkControlUpdate OnNetworkStateEstimate(
       NetworkStateEstimate msg) override;      
   NetworkControlUpdate OnReceiveBwe(BweMessage msg) override;
+  void OnRlBweConfig(RlBweConfig msg) override;
   NetworkControlUpdate GetNetworkState(Timestamp at_time) const;
   NetworkControlUpdate GetDefaultState(Timestamp at_time);
 

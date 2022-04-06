@@ -17,6 +17,10 @@ StreamsConfig::StreamsConfig() = default;
 StreamsConfig::StreamsConfig(const StreamsConfig&) = default;
 StreamsConfig::~StreamsConfig() = default;
 
+RlBweConfig::RlBweConfig() = default;
+RlBweConfig::RlBweConfig(const RlBweConfig&) = default;
+RlBweConfig::~RlBweConfig() = default;
+
 TargetRateConstraints::TargetRateConstraints() = default;
 TargetRateConstraints::TargetRateConstraints(const TargetRateConstraints&) =
     default;

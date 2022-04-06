@@ -83,7 +83,9 @@ bool IsNotDisabled(const WebRtcKeyValueConfig* config, absl::string_view key) {
 
 GoogCcNetworkController::GoogCcNetworkController(NetworkControllerConfig config,
                                                  GoogCcConfig goog_cc_config)
-    : key_value_config_(config.key_value_config ? config.key_value_config
+    : 
+      last_send_video_stats_(0),
+      key_value_config_(config.key_value_config ? config.key_value_config
                                                 : &trial_based_config_),
       event_log_(config.event_log),
       packet_feedback_only_(goog_cc_config.feedback_only),
@@ -132,8 +134,7 @@ GoogCcNetworkController::GoogCcNetworkController(NetworkControllerConfig config,
               DataRate::Zero())),
       max_padding_rate_(config.stream_based_config.max_padding_rate.value_or(
           DataRate::Zero())),
-      max_total_allocated_bitrate_(DataRate::Zero()),
-      last_send_video_stats_(0) {
+      max_total_allocated_bitrate_(DataRate::Zero()) {
   RTC_DCHECK(config.constraints.at_time.IsFinite());
   ParseFieldTrial(
       {&safe_reset_on_route_change_, &safe_reset_acknowledged_rate_},
@@ -299,8 +300,8 @@ NetworkControlUpdate GoogCcNetworkController::OnStreamsConfig(
     StreamsConfig msg) {
   NetworkControlUpdate update;
 
-  last_send_video_stats_ = msg.video_stats;
-  RTC_LOG(LS_INFO) << "video_send_statitics_: " << last_send_video_stats_;
+  // last_send_video_stats_ = msg.video_stats;
+  // RTC_LOG(LS_INFO) << "OnStreamsConfig video_send_statitics_: " << last_send_video_stats_;
   
   if (msg.requests_alr_probing) {
     probe_controller_->EnablePeriodicAlrProbing(*msg.requests_alr_probing);
@@ -340,6 +341,13 @@ NetworkControlUpdate GoogCcNetworkController::OnStreamsConfig(
   if (pacing_changed)
     update.pacer_config = GetPacingRates(msg.at_time);
   return update;
+}
+
+void GoogCcNetworkController::OnRlBweConfig(
+    RlBweConfig msg) {
+  last_send_video_stats_ = msg.video_stats;
+  RTC_LOG(LS_INFO) << "OnRlBweConfig video_send_statitics_: " << last_send_video_stats_;
+  return;
 }
 
 NetworkControlUpdate GoogCcNetworkController::OnTargetRateConstraints(
@@ -581,7 +589,8 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   rl_based_bwe_->rl_packet_.last_encoded_rate_ = last_send_video_stats_;
   // rl_based_bwe_->rl_packet_.recv_rate = recv_rate_now;
   rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
-  RTC_LOG(LS_INFO) << "last_encoded_rate_" << rl_based_bwe_->rl_packet_.last_encoded_rate_;
+  RTC_LOG(LS_INFO) << "last_send_video_stats_: " << last_send_video_stats_;
+  RTC_LOG(LS_INFO) << "last_encoded_rate_: " << rl_based_bwe_->rl_packet_.last_encoded_rate_;
 
   /*new*/
   rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);

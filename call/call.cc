@@ -233,6 +233,9 @@ class Call final : public webrtc::Call,
 
   // Implements TargetTransferRateObserver,
   void OnTargetTransferRate(TargetTransferRate msg) override;
+  // Impl OnRlBweUpdateRate.
+  void OnRlBweUpdateRate(RlBweConfig& msg) override;
+
   void OnStartRateUpdate(DataRate start_rate) override;
 
   // Implements BitrateAllocator::LimitObserver.
@@ -1116,6 +1119,11 @@ void Call::OnTargetTransferRate(TargetTransferRate msg) {
   uint32_t pacer_bitrate_bps =
       std::max(target_bitrate_bps, min_allocated_send_bitrate_bps_);
   pacer_bitrate_kbps_counter_.Add(pacer_bitrate_bps / 1000);
+}
+
+void Call::OnRlBweUpdateRate(RlBweConfig& msg){
+  msg.video_stats = bitrate_allocator_->GetRlBwe();
+  return;
 }
 
 void Call::OnAllocationLimitsChanged(BitrateAllocationLimits limits) {

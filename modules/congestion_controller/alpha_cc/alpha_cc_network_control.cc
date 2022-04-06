@@ -195,6 +195,10 @@ NetworkControlUpdate AlphaCcNetworkController::OnReceiveBwe(BweMessage bwe) {
   return update;
 }
 
+void AlphaCcNetworkController::OnRlBweConfig(RlBweConfig msg){
+  return;
+}
+
 void AlphaCcNetworkController::ClampConstraints() {
   // TODO(holmer): We should make sure the default bitrates are set to 10 kbps,
   // and that we don't try to set the min bitrate to 0 from any applications.

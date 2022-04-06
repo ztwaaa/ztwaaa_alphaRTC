@@ -75,6 +75,9 @@ class PccNetworkController : public NetworkControllerInterface {
 
   // Part of remote bitrate estimation api, not implemented for PCC
   NetworkControlUpdate OnStreamsConfig(StreamsConfig msg) override;
+
+  void OnRlBweConfig(RlBweConfig msg) override;
+
   NetworkControlUpdate OnRemoteBitrateReport(RemoteBitrateReport msg) override;
   NetworkControlUpdate OnRoundTripTimeUpdate(RoundTripTimeUpdate msg) override;
   NetworkControlUpdate OnTransportLossReport(TransportLossReport msg) override;
