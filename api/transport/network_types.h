@@ -36,8 +36,6 @@ struct BitrateAllocationLimits {
   // The max bitrate to use for padding. The sum of the per-stream max padding
   // rate.
   DataRate max_padding_rate = DataRate::Zero();
-  // 增加编码等参数上报
-  int video_stats = 0;
 };
 
 // Use StreamsConfig for information about streams that is required for specific
@@ -50,8 +48,6 @@ struct StreamsConfig {
   Timestamp at_time = Timestamp::PlusInfinity();
   absl::optional<bool> requests_alr_probing;
   absl::optional<double> pacing_factor;
-
-  int video_stats = 0;
 
   // TODO(srte): Use BitrateAllocationLimits here.
   absl::optional<DataRate> min_total_allocated_bitrate;

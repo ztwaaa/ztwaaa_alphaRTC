@@ -525,7 +525,6 @@ void BitrateAllocator::UpdateAllocationLimits() {
     return;
   }
   current_limits_ = limits;
-  limits.video_stats = video_send_statitics_;
 
   RTC_LOG(LS_INFO) << "UpdateAllocationLimits : total_requested_min_bitrate: "
                    << ToString(limits.min_allocatable_rate)
@@ -533,8 +532,7 @@ void BitrateAllocator::UpdateAllocationLimits() {
                    << ToString(limits.max_padding_rate)
                    << ", total_requested_max_bitrate: "
                    << ToString(limits.max_allocatable_rate)
-                   << ", video actual encoded bitrate: "
-                   << limits.video_stats;
+                   << ", video actual encoded bitrate: ";
 
   limit_observer_->OnAllocationLimitsChanged(limits);
 }

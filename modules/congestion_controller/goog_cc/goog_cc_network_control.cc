@@ -298,11 +298,7 @@ NetworkControlUpdate GoogCcNetworkController::OnReceivedPacket(
 
 NetworkControlUpdate GoogCcNetworkController::OnStreamsConfig(
     StreamsConfig msg) {
-  NetworkControlUpdate update;
-
-  // last_send_video_stats_ = msg.video_stats;
-  // RTC_LOG(LS_INFO) << "OnStreamsConfig video_send_statitics_: " << last_send_video_stats_;
-  
+  NetworkControlUpdate update;  
   if (msg.requests_alr_probing) {
     probe_controller_->EnablePeriodicAlrProbing(*msg.requests_alr_probing);
   }
