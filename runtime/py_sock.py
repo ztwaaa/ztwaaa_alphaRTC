@@ -1,3 +1,4 @@
+from cgi import print_form
 import socket
 import sys
 
@@ -29,7 +30,7 @@ def main(port):
                 if client_recv:
                     print("receive:{}>>>{}".format(client_addr, client_recv))
                     #print(bytes("%s" % data, encoding="utf-8"))
-                    client_socket.send(b'20')
+                    client_socket.send(b'5000')
 
                 else:
                     client_socket.close()

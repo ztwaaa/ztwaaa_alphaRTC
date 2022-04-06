@@ -52,7 +52,7 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket,int port){
         //printf("connect error\n");
         RTC_LOG(LS_INFO) << "socket connect error\n";
         int err=WSAGetLastError();
-        RTC_LOG(LS_INFO) << "socket-err-code" << err;
+        RTC_LOG(LS_INFO) << "socket-err-code: " << err;
         if(err!=10035)
             break;
         //system("pause");
@@ -81,17 +81,18 @@ void RLBasedBwe::SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket){
     RTC_LOG(LS_INFO) << "data to send:" << (char*)&data_packet_;
     int err=WSAGetLastError();
     RTC_LOG(LS_INFO) << "socket-err-code" << err;*/
-    char msg[256];
-    sprintf(msg,"RTT %f rn %f lps %f lr %d rr %f srl %f", data_packet_.RTT,
-                            data_packet_.retrans_num,
-                            data_packet_.lost_per_sec, 
-                            data_packet_.loss_rate,
-                            data_packet_.recv_rate,
-                            data_packet_.send_rate_last);
+    char msg[1024];
+    sprintf(msg,"RTT: %f send_rate_last %f loss_rate %d recv_rate %lld inter_packet_delay_ %f last_encoded_rate_ %d",
+                            data_packet_.RTT,
+                            data_packet_.send_rate_last,
+                            data_packet_.loss_rate, 
+                            data_packet_.recv_rate * 1000,
+                            data_packet_.inter_packet_delay_,
+                            data_packet_.last_encoded_rate_);
     send(RL_socket,msg,strlen(msg),0);
-    RTC_LOG(LS_INFO) << "data to send:" << msg;
-    int err=WSAGetLastError();
-    RTC_LOG(LS_INFO) << "socket-err-code" << err;
+    RTC_LOG(LS_INFO) << "data to send: " << msg;
+    int err = WSAGetLastError();
+    RTC_LOG(LS_INFO) << "socket-err-code: " << err;
     //exception  handle
     
     /*if(ret > 0)
@@ -158,8 +159,8 @@ RLBasedBwe::DataPacket::DataPacket()
         inter_packet_delay_(0),
         last_encoded_rate_(0) {}
 
-RLBasedBwe::DataPacket::DataPacket( float RTT,float lost_per_sec,
-                                    uint8_t loss_rate,float recv_rate,
+RLBasedBwe::DataPacket::DataPacket( float RTT, float lost_per_sec,
+                                    uint8_t loss_rate, int64_t recv_rate,
                                     float retrans_num,float send_rate_last,
                                     float inter_packet_delay,
                                     int last_encoded_rate)
@@ -203,11 +204,11 @@ RLBasedBwe::Result RLBasedBwe::FromRLModule(SOCKET RL_socket){
 char* RLBasedBwe::DataConvert(RLBasedBwe::DataPacket &data_packet_, char* converted_data_){
     int data_len = 6 * sizeof(float) + 5;
     if((isNotEmpty(data_packet_))&&(converted_data_!=NULL)){
-        sprintf(converted_data_,"%f_%f_%d_%f_%f_%f_%f_%d",
+        sprintf(converted_data_,"%f_%f_%d_%lld_%f_%f_%f_%d",
         data_packet_.RTT,
         data_packet_.lost_per_sec,
         data_packet_.loss_rate,
-        data_packet_.recv_rate,
+        data_packet_.recv_rate * 1000,
         data_packet_.retrans_num,
         data_packet_.send_rate_last,
         data_packet_.inter_packet_delay_,

@@ -22,15 +22,15 @@ public:
     RLBasedBwe();
     struct DataPacket{
         DataPacket();
-        DataPacket( float RTT,float lost_per_sec,
-                    uint8_t loss_rate,float recv_rate,
-                    float retrans_num,float send_rate_last, float inter_packet_delay_,
+        DataPacket( float RTT, float lost_per_sec,
+                    uint8_t loss_rate, int64_t recv_rate,
+                    float retrans_num, float send_rate_last, float inter_packet_delay_,
                     int last_encoded_rate_);
         ~DataPacket() = default;
         float RTT;
-        float lost_per_sec;
-        uint8_t loss_rate;
-        float recv_rate;
+        float lost_per_sec; // lost frames
+        uint8_t loss_rate; // loss rate
+        int64_t recv_rate;
         float retrans_num;
         float send_rate_last;
         float inter_packet_delay_;

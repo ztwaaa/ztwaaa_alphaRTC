@@ -507,10 +507,10 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
 
 
   /*new*/
-  rl_based_bwe_->rl_packet_.recv_rate = recv_rate_now;
-  rl_based_bwe_->rl_packet_.send_rate_last = send_rate_last_time;
+  // rl_based_bwe_->rl_packet_.recv_rate = recv_rate_now;
+  // rl_based_bwe_->rl_packet_.send_rate_last = send_rate_last_time;
 
-  rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
+  // rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
   //RTC_LOG(LS_INFO) << "data sent";
 
   if (previously_in_alr_ && !alr_start_time.has_value()) {
@@ -577,13 +577,16 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   
   RTC_LOG(LS_INFO) << "before rl_packet_";
 
-  // rl_based_bwe_->rl_packet_.send_rate_last = send_rate_last_time;
-  // rl_based_bwe_->rl_packet_.RTT = bandwidth_estimation_->round_trip_time().ms();
-  // rl_based_bwe_->rl_packet_.loss_rate = bandwidth_estimation_->fraction_loss();
-  // rl_based_bwe_->rl_packet_.recv_rate = (*acknowledged_bitrate).kbps();
-  // rl_based_bwe_->rl_packet_.inter_packet_delay_ = delay_based_bwe_->get_recv_delta_ms()-delay_based_bwe_->get_send_delta_ms();
+  rl_based_bwe_->rl_packet_.RTT = bandwidth_estimation_->round_trip_time().ms();
+  rl_based_bwe_->rl_packet_.send_rate_last = send_rate_last_time;
+  rl_based_bwe_->rl_packet_.loss_rate = bandwidth_estimation_->fraction_loss();
+  if(acknowledged_bitrate.has_value()){
+    rl_based_bwe_->rl_packet_.recv_rate = acknowledged_bitrate.value().kbps();
+  }
+  rl_based_bwe_->rl_packet_.inter_packet_delay_ = delay_based_bwe_->get_recv_delta_ms()-delay_based_bwe_->get_send_delta_ms();
   rl_based_bwe_->rl_packet_.last_encoded_rate_ = last_send_video_stats_;
   // rl_based_bwe_->rl_packet_.recv_rate = recv_rate_now;
+
   rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
   RTC_LOG(LS_INFO) << "last_send_video_stats_: " << last_send_video_stats_;
   RTC_LOG(LS_INFO) << "last_encoded_rate_: " << rl_based_bwe_->rl_packet_.last_encoded_rate_;
