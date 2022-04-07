@@ -494,6 +494,10 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
     }
     if (report.feedback_time > next_loss_update_) {
       next_loss_update_ = report.feedback_time + kLossUpdateInterval;
+      // 更新丢包率，同时进行loss_based_bwe估计 
+      // 因为该步骤早于delay_based_bwe对码率的更新
+      // 所以loss_based_bwe会先修改N次current_target_
+      // delay_based_bwe后续还会SendSideBandwidthEstimation::current_target_
       bandwidth_estimation_->UpdatePacketsLost(
           lost_packets_since_last_loss_update_,
           expected_packets_since_last_loss_update_, report.feedback_time);
@@ -571,6 +575,7 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   bool backoff_in_alr = false;
 
   DelayBasedBwe::Result result;
+  // 基于延时的码率估计
   result = delay_based_bwe_->IncomingPacketFeedbackVector(
       report, acknowledged_bitrate, probe_bitrate, estimate_,
       alr_start_time.has_value());
@@ -598,11 +603,13 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   
   if (result.updated) {
     if (result.probe) {
+      // 更新SendSideBandwidthEstimation::current_target_
       bandwidth_estimation_->SetSendBitrate(result.target_bitrate,
                                             report.feedback_time);
     }
     // Since SetSendBitrate now resets the delay-based estimate, we have to
     // call UpdateDelayBasedEstimate after SetSendBitrate.
+    // 更新bandwidth_estimation_中基于延迟的估计码率
     bandwidth_estimation_->UpdateDelayBasedEstimate(report.feedback_time,
                                                     result.target_bitrate);
     // Update the estimate in the ProbeController, in case we want to probe.

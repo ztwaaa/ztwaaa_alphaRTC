@@ -200,7 +200,7 @@ DataRate AimdRateControl::Update(const RateControlInput* input,
       bitrate_is_initialized_ = true;
     }
   }
-
+  // 根据状态机状态更新，调整码率，并返回码率调节结果。
   ChangeBitrate(*input, at_time);
   return current_bitrate_;
 }
@@ -271,6 +271,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
       input.bw_state != BandwidthUsage::kBwOverusing)
     return;
 
+  //根据状态机更新结果，调节码率控制状态
   ChangeState(input, at_time);
 
   // We limit the new bitrate based on the troughput to avoid unlimited bitrate
@@ -365,6 +366,7 @@ void AimdRateControl::ChangeBitrate(const RateControlInput& input,
       assert(false);
   }
 
+  // 确保最后的码率在[upperbound, min_configured_bitrate_]
   current_bitrate_ = ClampBitrate(new_bitrate.value_or(current_bitrate_));
 }
 

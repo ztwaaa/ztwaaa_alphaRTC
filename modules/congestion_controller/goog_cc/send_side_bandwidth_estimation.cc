@@ -318,6 +318,7 @@ void SendSideBandwidthEstimation::UpdateDelayBasedEstimate(Timestamp at_time,
   link_capacity_.UpdateDelayBasedEstimate(at_time, bitrate);
   // TODO(srte): Ensure caller passes PlusInfinity, not zero, to represent no
   // limitation.
+  // 更新码率选择上界，不超过delay_based_bwe更新的码率
   delay_based_limit_ = bitrate.IsZero() ? DataRate::PlusInfinity() : bitrate;
   ApplyTargetLimits(at_time);
 }
@@ -360,6 +361,7 @@ void SendSideBandwidthEstimation::UpdatePacketsLost(int packets_lost,
     has_decreased_since_last_fraction_loss_ = false;
     int64_t lost_q8 = lost_packets_since_last_loss_update_ << 8;
     int64_t expected = expected_packets_since_last_loss_update_;
+    // 计算当前fraction的丢包率
     last_fraction_loss_ = std::min<int>(lost_q8 / expected, 255);
 
     // Reset accumulators.
@@ -367,6 +369,7 @@ void SendSideBandwidthEstimation::UpdatePacketsLost(int packets_lost,
     lost_packets_since_last_loss_update_ = 0;
     expected_packets_since_last_loss_update_ = 0;
     last_loss_packet_report_ = at_time;
+    // 更新目标码率
     UpdateEstimate(at_time);
   }
   UpdateUmaStatsPacketsLost(at_time, packets_lost);
@@ -417,13 +420,17 @@ void SendSideBandwidthEstimation::UpdateRtt(TimeDelta rtt, Timestamp at_time) {
 
 void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
   if (rtt_backoff_.CorrectedRtt(at_time) > rtt_backoff_.rtt_limit_) {
+    // 网络拥堵，预估rtt大于rtt限制
     if (at_time - time_last_decrease_ >= rtt_backoff_.drop_interval_ &&
         current_target_ > rtt_backoff_.bandwidth_floor_) {
+      // 当前码率大于rtt_backoff_.bandwidth_floor_ (5kbs)，可以下调码率
       time_last_decrease_ = at_time;
+      // new_bitrate = max(current_target * 0.8, 5kb)
       DataRate new_bitrate =
           std::max(current_target_ * rtt_backoff_.drop_fraction_,
                    rtt_backoff_.bandwidth_floor_.Get());
       link_capacity_.OnRttBackoff(new_bitrate, at_time);
+      // 基于丢包的最终码率更新（后续还会根据delay_based_bwe再更新一次）
       UpdateTargetBitrate(new_bitrate, at_time);
       return;
     }
@@ -434,14 +441,18 @@ void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
 
   // We trust the REMB and/or delay-based estimate during the first 2 seconds if
   // we haven't had any packet loss reported, to allow startup bitrate probing.
+  // 最初的2s没有packet loss report，相信remb或者延迟码率的估算结果
   if (last_fraction_loss_ == 0 && IsInStartPhase(at_time)) {
     DataRate new_bitrate = current_target_;
     // TODO(srte): We should not allow the new_bitrate to be larger than the
     // receiver limit here.
+    // REMB
     if (receiver_limit_.IsFinite())
       new_bitrate = std::max(receiver_limit_, new_bitrate);
+    // delay_based_bwe
     if (delay_based_limit_.IsFinite())
       new_bitrate = std::max(delay_based_limit_, new_bitrate);
+    // 
     if (loss_based_bandwidth_estimation_.Enabled()) {
       loss_based_bandwidth_estimation_.SetInitialBitrate(new_bitrate);
     }
@@ -473,7 +484,7 @@ void SendSideBandwidthEstimation::UpdateEstimate(Timestamp at_time) {
     UpdateTargetBitrate(new_bitrate, at_time);
     return;
   }
-
+  // 论文所述The loss-based controller 码率更新方法
   TimeDelta time_since_loss_packet_report = at_time - last_loss_packet_report_;
   if (time_since_loss_packet_report < 1.2 * kMaxRtcpFeedbackInterval) {
     // We only care about loss above a given bitrate threshold.
@@ -580,6 +591,8 @@ DataRate SendSideBandwidthEstimation::MaybeRampupOrBackoff(DataRate new_bitrate,
 }
 
 DataRate SendSideBandwidthEstimation::GetUpperLimit() const {
+  // 向下兼容REMB，receiver_limit_当没有任何基于发送端延迟的估计时使用。
+  // 码率上界=min[delay_based_bwe更新的码率, REMB recv-side估计码率]
   DataRate upper_limit = std::min(delay_based_limit_, receiver_limit_);
   upper_limit = std::min(upper_limit, max_bitrate_configured_);
   if (loss_based_bandwidth_estimation_.Enabled() &&
@@ -615,11 +628,14 @@ void SendSideBandwidthEstimation::MaybeLogLossBasedEvent(Timestamp at_time) {
 
 void SendSideBandwidthEstimation::UpdateTargetBitrate(DataRate new_bitrate,
                                                       Timestamp at_time) {
+  // 新码率不能大于延迟预估码率(delay_based_limit_)
   new_bitrate = std::min(new_bitrate, GetUpperLimit());
+  // 保证码率大于下限
   if (new_bitrate < min_bitrate_configured_) {
     MaybeLogLowBitrateWarning(new_bitrate, at_time);
     new_bitrate = min_bitrate_configured_;
   }
+  // 再次更新SendSideBandwidthEstimation::current_target_
   current_target_ = new_bitrate;
   MaybeLogLossBasedEvent(at_time);
   link_capacity_.OnRateUpdate(acknowledged_rate_, current_target_, at_time);

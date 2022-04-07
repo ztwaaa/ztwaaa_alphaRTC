@@ -74,6 +74,7 @@ double ExponentialUpdate(TimeDelta window, TimeDelta interval) {
 }  // namespace
 
 LossBasedControlConfig::LossBasedControlConfig()
+    // field_trial::IsEnabled()举例
     : enabled(field_trial::IsEnabled(kBweLossBasedControl)),
       min_increase_factor("min_incr", 1.02),
       max_increase_factor("max_incr", 1.08),

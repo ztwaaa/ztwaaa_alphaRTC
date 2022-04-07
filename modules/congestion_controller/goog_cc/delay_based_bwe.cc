@@ -157,6 +157,7 @@ DelayBasedBwe::Result DelayBasedBwe::IncomingPacketFeedbackVector(
   BandwidthUsage prev_detector_state = active_delay_detector_->State();
   for (const auto& packet_feedback : packet_feedback_vector) {
     delayed_feedback = false;
+    // 对每个包做trendline
     IncomingPacketFeedback(packet_feedback, msg.feedback_time);
     if (prev_detector_state == BandwidthUsage::kBwUnderusing &&
         active_delay_detector_->State() == BandwidthUsage::kBwNormal) {
@@ -170,8 +171,10 @@ DelayBasedBwe::Result DelayBasedBwe::IncomingPacketFeedbackVector(
     // against building very large network queues.
     return Result();
   }
+  // 向aim_rate_controller传递变量
   rate_control_.SetInApplicationLimitedRegion(in_alr);
   rate_control_.SetNetworkStateEstimate(network_estimate);
+  // 执行码率调整
   return MaybeUpdateEstimate(acked_bitrate, probe_bitrate,
                              std::move(network_estimate),
                              recovered_from_overuse, in_alr, msg.feedback_time);
@@ -247,12 +250,14 @@ void DelayBasedBwe::IncomingPacketFeedback(const PacketResult& packet_feedback,
   uint32_t timestamp_delta = 0;
   int64_t recv_delta_ms = 0;
   int size_delta = 0;
+  // 计算前后两组包的delta time
   bool calculated_deltas = inter_arrival_for_packet->ComputeDeltas(
       timestamp, packet_feedback.receive_time.ms(), at_time.ms(),
       packet_size.bytes(), &timestamp_delta, &recv_delta_ms, &size_delta);
   double send_delta_ms = (1000.0 * timestamp_delta) / (1 << kInterArrivalShift);
   recv_delta_ms_ = recv_delta_ms;
   send_delta_ms_ = send_delta_ms;
+  // 计算网络拥堵状态
   delay_detector_for_packet->Update(recv_delta_ms, send_delta_ms,
                                     packet_feedback.sent_packet.send_time.ms(),
                                     packet_feedback.receive_time.ms(),
@@ -274,7 +279,7 @@ DelayBasedBwe::Result DelayBasedBwe::MaybeUpdateEstimate(
     Timestamp at_time) {
   Result result;
 
-  // Currently overusing the bandwidth.
+  // Currently overusing the bandwidth. 过载
   if (active_delay_detector_->State() == BandwidthUsage::kBwOverusing) {
     if (has_once_detected_overuse_ && in_alr && alr_limited_backoff_enabled_) {
       if (rate_control_.TimeToReduceFurther(at_time, prev_bitrate_)) {
@@ -295,10 +300,14 @@ DelayBasedBwe::Result DelayBasedBwe::MaybeUpdateEstimate(
       rate_control_.SetEstimate(rate_control_.LatestEstimate() / 2, at_time);
       result.updated = true;
       result.probe = false;
+      // 赋值，AimdRateControl.current_bitrate_
       result.target_bitrate = rate_control_.LatestEstimate();
     }
     has_once_detected_overuse_ = true;
-  } else {
+  } 
+  // normal和under using
+  else {
+    // 如果有探测码率，无须慢增长，直接使用探测码率，并且把探测码率的数据更新到rate_control中
     if (probe_bitrate) {
       result.probe = true;
       result.updated = true;
@@ -325,13 +334,17 @@ DelayBasedBwe::Result DelayBasedBwe::MaybeUpdateEstimate(
     prev_bitrate_ = bitrate;
     prev_state_ = detector_state;
   }
+  // result.updated = UpdateEstimate(at_time, acked_bitrate, &result.target_bitrate);
+  // 其中result.target_bitrate即码率调整后的最终delay_based_bwe的目标码率
   return result;
 }
 
 bool DelayBasedBwe::UpdateEstimate(Timestamp at_time,
                                    absl::optional<DataRate> acked_bitrate,
                                    DataRate* target_rate) {
+  // 根据状态机变化和预测吞吐量调节码率
   const RateControlInput input(active_delay_detector_->State(), acked_bitrate);
+  // delay_based最终码率
   *target_rate = rate_control_.Update(&input, at_time);
   return rate_control_.ValidEstimate();
 }

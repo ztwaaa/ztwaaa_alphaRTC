@@ -234,6 +234,7 @@ void TrendlineEstimator::UpdateTrendline(double recv_delta_ms,
     // 0 < trend < 1   ->  the delay increases, queues are filling up
     //   trend == 0    ->  the delay does not change
     //   trend < 0     ->  the delay decreases, queues are being emptied
+    // 最小二乘法计算拟合斜率
     trend = LinearFitSlope(delay_hist_).value_or(trend);
     if (settings_.enable_cap) {
       absl::optional<double> cap = ComputeSlopeCap(delay_hist_, settings_);
@@ -246,6 +247,7 @@ void TrendlineEstimator::UpdateTrendline(double recv_delta_ms,
   }
   BWE_TEST_LOGGING_PLOT(1, "trendline_slope", arrival_time_ms, trend);
 
+  // 过载状态判定+更新阈值
   Detect(trend, send_delta_ms, arrival_time_ms);
 }
 
