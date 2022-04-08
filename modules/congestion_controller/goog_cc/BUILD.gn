@@ -194,6 +194,7 @@ rtc_library("rl_based_bwe") {
   deps = [
     "../../../api/units:data_rate",
     ":delay_based_bwe",
+    "../../../rtc_base:rtc_json",
   ]
 }
 

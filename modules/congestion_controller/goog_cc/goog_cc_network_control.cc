@@ -31,7 +31,6 @@
 #include "rtc_base/checks.h"
 #include "rtc_base/logging.h"
 #include "modules/congestion_controller/goog_cc/probe_bitrate_estimator.h"
-#include "modules/congestion_controller/goog_cc/rl_based_bwe.h"
 #include "call/rtp_transport_controller_send.h"
 
 #ifdef _WIN32
@@ -41,7 +40,6 @@
 #else
 #include<linux/socket.h>
 #endif
-float send_rate_last_time;
 float send_rate_now;
 float recv_rate_now;
 namespace webrtc {
@@ -84,7 +82,6 @@ bool IsNotDisabled(const WebRtcKeyValueConfig* config, absl::string_view key) {
 GoogCcNetworkController::GoogCcNetworkController(NetworkControllerConfig config,
                                                  GoogCcConfig goog_cc_config)
     : 
-      last_send_video_stats_(0),
       key_value_config_(config.key_value_config ? config.key_value_config
                                                 : &trial_based_config_),
       event_log_(config.event_log),
@@ -134,7 +131,11 @@ GoogCcNetworkController::GoogCcNetworkController(NetworkControllerConfig config,
               DataRate::Zero())),
       max_padding_rate_(config.stream_based_config.max_padding_rate.value_or(
           DataRate::Zero())),
-      max_total_allocated_bitrate_(DataRate::Zero()) {
+      max_total_allocated_bitrate_(DataRate::Zero()),
+      rl_based_bwe_(std::make_unique<RLBasedBwe>()),
+      last_encoder_rate_bps_(0),
+      last_pacing_rate_bps_(0),
+      last_final_estimation_rate_bps_(0) {
   RTC_DCHECK(config.constraints.at_time.IsFinite());
   ParseFieldTrial(
       {&safe_reset_on_route_change_, &safe_reset_acknowledged_rate_},
@@ -341,8 +342,8 @@ NetworkControlUpdate GoogCcNetworkController::OnStreamsConfig(
 
 void GoogCcNetworkController::OnRlBweConfig(
     RlBweConfig msg) {
-  last_send_video_stats_ = msg.video_stats;
-  RTC_LOG(LS_INFO) << "OnRlBweConfig video_send_statitics_: " << last_send_video_stats_;
+  last_encoder_rate_bps_ = msg.video_stats;
+  RTC_LOG(LS_INFO) << "OnRlBweConfig video_send_statitics_: " << last_encoder_rate_bps_;
   return;
 }
 
@@ -426,7 +427,7 @@ void GoogCcNetworkController::UpdateCongestionWindowSize() {
 
 NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
     TransportPacketsFeedback report) {
-  std::unique_ptr<RLBasedBwe> rl_based_bwe_ = std::make_unique<RLBasedBwe>();
+  
   RTC_LOG(LS_INFO) << "OnTransportPacketsFeedback";
   if (report.packet_feedbacks.empty()) {
     // TODO(bugs.webrtc.org/10125): Design a better mechanism to safe-guard
@@ -509,14 +510,6 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   absl::optional<int64_t> alr_start_time =
       alr_detector_->GetApplicationLimitedRegionStartTime();
 
-
-  /*new*/
-  // rl_based_bwe_->rl_packet_.recv_rate = recv_rate_now;
-  // rl_based_bwe_->rl_packet_.send_rate_last = send_rate_last_time;
-
-  // rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
-  //RTC_LOG(LS_INFO) << "data sent";
-
   if (previously_in_alr_ && !alr_start_time.has_value()) {
     int64_t now_ms = report.feedback_time.ms();
     acknowledged_bitrate_estimator_->SetAlrEndedTime(report.feedback_time);
@@ -525,6 +518,7 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   previously_in_alr_ = alr_start_time.has_value();
   acknowledged_bitrate_estimator_->IncomingPacketFeedbackVector(
       report.SortedByReceiveTime());
+  // 接收端吞吐量估计
   auto acknowledged_bitrate = acknowledged_bitrate_estimator_->bitrate();
   bandwidth_estimation_->SetAcknowledgedRate(acknowledged_bitrate,
                                              report.feedback_time);
@@ -581,23 +575,24 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
       alr_start_time.has_value());
   
   RTC_LOG(LS_INFO) << "before rl_packet_";
-
-  rl_based_bwe_->rl_packet_.RTT = bandwidth_estimation_->round_trip_time().ms();
-  rl_based_bwe_->rl_packet_.send_rate_last = send_rate_last_time;
-  rl_based_bwe_->rl_packet_.loss_rate = bandwidth_estimation_->fraction_loss();
+  rl_based_bwe_->rl_packet_.get_rl_input_time_ms_ = report.feedback_time.ms();
+  rl_based_bwe_->rl_packet_.rtt_ms_ = bandwidth_estimation_->round_trip_time().ms();
+  rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_ = GetFinalEstimationRate();
+  rl_based_bwe_->rl_packet_.loss_rate_ = bandwidth_estimation_->fraction_loss();
   if(acknowledged_bitrate.has_value()){
-    rl_based_bwe_->rl_packet_.recv_rate = acknowledged_bitrate.value().kbps();
+    rl_based_bwe_->rl_packet_.recv_throughput_bps_ = acknowledged_bitrate.value().bps();
   }
-  rl_based_bwe_->rl_packet_.inter_packet_delay_ = delay_based_bwe_->get_recv_delta_ms()-delay_based_bwe_->get_send_delta_ms();
-  rl_based_bwe_->rl_packet_.last_encoded_rate_ = last_send_video_stats_;
-  // rl_based_bwe_->rl_packet_.recv_rate = recv_rate_now;
+  rl_based_bwe_->rl_packet_.inter_packet_delay_ms_ = delay_based_bwe_->get_recv_delta_ms()-delay_based_bwe_->get_send_delta_ms();
+  rl_based_bwe_->rl_packet_.last_encoded_rate_bps_ = GetLastEncoderRate();
+  rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastPacingRate();
 
   rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
-  RTC_LOG(LS_INFO) << "last_send_video_stats_: " << last_send_video_stats_;
-  RTC_LOG(LS_INFO) << "last_encoded_rate_: " << rl_based_bwe_->rl_packet_.last_encoded_rate_;
+  RTC_LOG(LS_INFO) << "last_encoder_rate_bps_: " << last_encoder_rate_bps_;
+  RTC_LOG(LS_INFO) << "last_encoded_rate_bps_: " << rl_based_bwe_->rl_packet_.last_encoded_rate_bps_;
 
   /*new*/
-  rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);
+  // rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);
+  // 如果直接用FromRLModule代替delay_based_bwe会影响下一轮GCC决策 
   //result = toDelayBasedResult(rl_based_bwe_->rl_result);
   /*end*/
   
@@ -678,7 +673,16 @@ void GoogCcNetworkController::MaybeTriggerOnNetworkChanged(
     Timestamp at_time) {
   uint8_t fraction_loss = bandwidth_estimation_->fraction_loss();
   TimeDelta round_trip_time = bandwidth_estimation_->round_trip_time();
+  // 接收AiInfer结果
+  rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);
   DataRate loss_based_target_rate = bandwidth_estimation_->target_rate();
+
+  // 接受ai infer调节，不使用GCC算法。
+  if(!rl_based_bwe_->rl_result.use_gcc_result_){
+    loss_based_target_rate = rl_based_bwe_->rl_result.target_bitrate_;
+  }
+  // 记录本轮最终码率上报结果，用于下一轮发送
+  last_final_estimation_rate_bps_ = loss_based_target_rate.bps();
   DataRate pushback_target_rate = loss_based_target_rate;
 
   BWE_TEST_LOGGING_PLOT(1, "fraction_loss_%", at_time.ms(),
@@ -745,6 +749,7 @@ void GoogCcNetworkController::MaybeTriggerOnNetworkChanged(
     update->probe_cluster_configs.insert(update->probe_cluster_configs.end(),
                                          probes.begin(), probes.end());
     update->pacer_config = GetPacingRates(at_time);
+    last_pacing_rate_bps_ = GetPacingRates(at_time).data_rate().bps();
 
     RTC_LOG(LS_VERBOSE) << "bwe " << at_time.ms() << " pushback_target_bps="
                         << last_pushback_target_rate_.bps()
@@ -760,6 +765,7 @@ PacerConfig GoogCcNetworkController::GetPacingRates(Timestamp at_time) const {
       pacing_factor_;
   DataRate padding_rate =
       std::min(max_padding_rate_, last_pushback_target_rate_);
+
   PacerConfig msg;
   msg.at_time = at_time;
   msg.time_window = TimeDelta::Seconds(1);

@@ -1,7 +1,10 @@
 #include "modules/congestion_controller/goog_cc/rl_based_bwe.h"
 #include "modules/congestion_controller/goog_cc/delay_based_bwe.h"
-#include "modules/third_party/statcollect/json.hpp"
+// #include "modules/third_party/statcollect/json.hpp"
 #include "rtc_base/logging.h"
+#include "rtc_base/strings/json.h"
+
+#include <iostream>
 #include<cstring>
 #ifdef _WIN32
 #include<windows.h>
@@ -64,6 +67,28 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket,int port){
     return 0;
 }
 
+std::string RLBasedBwe::Convert2Json(RLBasedBwe::DataPacket data_packet_){
+
+    Json::Value input_to_send;
+    Json::StreamWriterBuilder writerBuilder;
+    std::ostringstream os;
+
+    input_to_send["get_rl_input_time_ms"] = Json::Value(data_packet_.get_rl_input_time_ms_);
+    input_to_send["rtt_ms"] = Json::Value(data_packet_.rtt_ms_);
+    input_to_send["last_final_estimation_rate_bps"] = Json::Value(data_packet_.last_final_estimation_rate_bps_);
+    input_to_send["loss_rate"] = Json::Value(data_packet_.loss_rate_);
+    input_to_send["recv_throughput_bps"] = Json::Value(data_packet_.recv_throughput_bps_);
+    input_to_send["inter_packet_delay_ms"] = Json::Value(data_packet_.inter_packet_delay_ms_);
+    input_to_send["last_encoded_rate_bps"] = Json::Value(data_packet_.last_encoded_rate_bps_);
+    input_to_send["last_pacing_rate_bps_"] = Json::Value(data_packet_.last_pacing_rate_bps_);
+
+    std::unique_ptr<Json::StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
+    jsonWriter->write(input_to_send, &os);
+    std::string jsonStr = os.str();
+    std::cout << "Json to send:\n" << jsonStr << std::endl;
+    return jsonStr;
+}
+
 /*socket 模块可以在之前的模块上进行修改得来 为了展示不再详写*/
 void RLBasedBwe::SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket){
     //socket
@@ -81,16 +106,19 @@ void RLBasedBwe::SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket){
     RTC_LOG(LS_INFO) << "data to send:" << (char*)&data_packet_;
     int err=WSAGetLastError();
     RTC_LOG(LS_INFO) << "socket-err-code" << err;*/
-    char msg[1024];
-    sprintf(msg,"RTT: %f send_rate_last %f loss_rate %d recv_rate %lld inter_packet_delay_ %f last_encoded_rate_ %d",
-                            data_packet_.RTT,
-                            data_packet_.send_rate_last,
-                            data_packet_.loss_rate, 
-                            data_packet_.recv_rate * 1000,
-                            data_packet_.inter_packet_delay_,
-                            data_packet_.last_encoded_rate_);
-    send(RL_socket,msg,strlen(msg),0);
-    RTC_LOG(LS_INFO) << "data to send: " << msg;
+    
+    std::string sendbuf = Convert2Json(data_packet_);
+    send(RL_Socket, sendbuf.c_str(), sendbuf.size(), 0);
+    // char msg[1024];
+    // sprintf(msg,"rtt_ms_: %f last_final_estimation_rate_bps_ %lld loss_rate %d recv_throughput_bps_ %lld inter_packet_delay_ms_ %f last_encoded_rate_bps_ %d",
+    //                         data_packet_.rtt_ms_,
+    //                         data_packet_.last_final_estimation_rate_bps_,
+    //                         data_packet_.loss_rate_, 
+    //                         data_packet_.recv_throughput_bps_,
+    //                         data_packet_.inter_packet_delay_ms_,
+    //                         data_packet_.last_encoded_rate_bps_);
+    // send(RL_socket,msg,strlen(msg),0);
+    // RTC_LOG(LS_INFO) << "data to send: " << msg;
     int err = WSAGetLastError();
     RTC_LOG(LS_INFO) << "socket-err-code: " << err;
     //exception  handle
@@ -150,42 +178,40 @@ float RLBasedBwe::RecvFromRL(SOCKET RL_socket){
     }
 }
 RLBasedBwe::DataPacket::DataPacket()
-    :   RTT(0),
+    :   get_rl_input_time_ms_(0),
+        rtt_ms_(0),
         lost_per_sec(0),
-        loss_rate(0),
-        recv_rate(0),
+        loss_rate_(0),
+        recv_throughput_bps_(0),
         retrans_num(0),
-        send_rate_last(0),
-        inter_packet_delay_(0),
-        last_encoded_rate_(0) {}
+        last_final_estimation_rate_bps_(0),
+        inter_packet_delay_ms_(0),
+        last_encoded_rate_bps_(0),
+        last_pacing_rate_bps_(0) {}
 
-RLBasedBwe::DataPacket::DataPacket( float RTT, float lost_per_sec,
-                                    uint8_t loss_rate, int64_t recv_rate,
-                                    float retrans_num,float send_rate_last,
+RLBasedBwe::DataPacket::DataPacket( int64_t get_rl_input_time_ms, float rtt, float lost_per_sec,
+                                    uint8_t loss_rate, int64_t recv_throughput_bps,
+                                    float retrans_num, int64_t last_final_estimation_rate_bps,
                                     float inter_packet_delay,
-                                    int last_encoded_rate)
-    :   RTT(RTT),
+                                    int last_encoded_rate, int64_t last_pacing_rate_bps)
+    :   get_rl_input_time_ms_(get_rl_input_time_ms),
+        rtt_ms_(rtt),
         lost_per_sec(lost_per_sec),
-        loss_rate(loss_rate),
-        recv_rate(recv_rate),
+        loss_rate_(loss_rate),
+        recv_throughput_bps_(recv_throughput_bps),
         retrans_num(retrans_num),
-        send_rate_last(send_rate_last),
-        inter_packet_delay_(inter_packet_delay),
-        last_encoded_rate_(last_encoded_rate) {}
+        last_final_estimation_rate_bps_(last_final_estimation_rate_bps),
+        inter_packet_delay_ms_(inter_packet_delay),
+        last_encoded_rate_bps_(last_encoded_rate),
+        last_pacing_rate_bps_(last_pacing_rate_bps) {}
 
 RLBasedBwe::Result::Result()
-    :   updated(false),
-        probe(false),
-        target_bitrate(DataRate::Zero()),
-        recovered_from_overuse(false),
-        backoff_in_alr(false) {}
+    :   use_gcc_result_(false),
+        target_bitrate_(DataRate::Zero()) {}
 
-RLBasedBwe::Result::Result(bool probe, DataRate target_bitrate)
-    :   updated(true),
-        probe(probe),
-        target_bitrate(target_bitrate),
-        recovered_from_overuse(false),
-        backoff_in_alr(false) {}
+RLBasedBwe::Result::Result(bool use_gcc_result, DataRate target_bitrate)
+    :   use_gcc_result_(use_gcc_result),
+        target_bitrate_(target_bitrate) {}
 
 DataRate RLBasedBwe::getResult(SOCKET RL_socket, float target_rate_float){
     
@@ -198,21 +224,21 @@ RLBasedBwe::Result RLBasedBwe::FromRLModule(SOCKET RL_socket){
     DataRate target_datarate = DataRate::Zero();
     target_rate_float = RecvFromRL(RL_socket);
     target_datarate = webrtc::DataRate::KilobitsPerSec(target_rate_float);
-    return (target_rate_float==0)?Result():Result(true, target_datarate);
+    return (target_rate_float < 0) ? Result() : Result(true, target_datarate);
 }
 
 char* RLBasedBwe::DataConvert(RLBasedBwe::DataPacket &data_packet_, char* converted_data_){
     int data_len = 6 * sizeof(float) + 5;
     if((isNotEmpty(data_packet_))&&(converted_data_!=NULL)){
-        sprintf(converted_data_,"%f_%f_%d_%lld_%f_%f_%f_%d",
-        data_packet_.RTT,
+        sprintf(converted_data_,"%f_%f_%d_%lld_%f_%lld_%f_%d",
+        data_packet_.rtt_ms_,
         data_packet_.lost_per_sec,
-        data_packet_.loss_rate,
-        data_packet_.recv_rate * 1000,
+        data_packet_.loss_rate_,
+        data_packet_.recv_throughput_bps_,
         data_packet_.retrans_num,
-        data_packet_.send_rate_last,
-        data_packet_.inter_packet_delay_,
-        data_packet_.last_encoded_rate_
+        data_packet_.last_final_estimation_rate_bps_,
+        data_packet_.inter_packet_delay_ms_,
+        data_packet_.last_encoded_rate_bps_
         );
     }
     else {
@@ -221,22 +247,22 @@ char* RLBasedBwe::DataConvert(RLBasedBwe::DataPacket &data_packet_, char* conver
     return converted_data_;
 }
 bool RLBasedBwe::isNotEmpty(DataPacket &data_packet_){
-    if( data_packet_.loss_rate == 0 &&
+    if( data_packet_.loss_rate_ == 0 &&
         data_packet_.lost_per_sec == 0 &&
-        data_packet_.recv_rate == 0 &&
+        data_packet_.recv_throughput_bps_ == 0 &&
         data_packet_.retrans_num == 0 &&
-        data_packet_.send_rate_last == 0 &&
-        data_packet_.RTT ==0 && 
-        data_packet_.inter_packet_delay_ == 0 &&
-        data_packet_.last_encoded_rate_ == 0
+        data_packet_.last_final_estimation_rate_bps_ == 0 &&
+        data_packet_.rtt_ms_ ==0 && 
+        data_packet_.inter_packet_delay_ms_ == 0 &&
+        data_packet_.last_encoded_rate_bps_ == 0
     )
         return false;
     else 
         return true;
 }
-webrtc::DelayBasedBwe::Result toDelayBasedResult(RLBasedBwe::Result RL_result){
-    webrtc::DelayBasedBwe::Result converted_result_ = 
-                            webrtc::DelayBasedBwe::Result(RL_result.probe, RL_result.target_bitrate);
-    return converted_result_;
-}
+// webrtc::DelayBasedBwe::Result toDelayBasedResult(RLBasedBwe::Result RL_result){
+//     webrtc::DelayBasedBwe::Result converted_result_ = 
+//                             webrtc::DelayBasedBwe::Result(RL_result.probe, RL_result.target_bitrate);
+//     return converted_result_;
+// }
 }

@@ -22,39 +22,53 @@ public:
     RLBasedBwe();
     struct DataPacket{
         DataPacket();
-        DataPacket( float RTT, float lost_per_sec,
-                    uint8_t loss_rate, int64_t recv_rate,
-                    float retrans_num, float send_rate_last, float inter_packet_delay_,
-                    int last_encoded_rate_);
+        DataPacket( int64_t get_rl_input_time_ms, float rtt_ms, float lost_per_sec,
+                    uint8_t loss_rate, int64_t recv_throughput_bps,
+                    float retrans_num, int64_t last_final_estimation_rate_bps, float inter_packet_delay_ms,
+                    int last_encoded_rate_bps, int64_t last_pacing_rate_bps);
         ~DataPacket() = default;
-        float RTT;
-        float lost_per_sec; // lost frames
-        uint8_t loss_rate; // loss rate
-        int64_t recv_rate;
+
+        int64_t get_rl_input_time_ms_; // feedback时间
+        float rtt_ms_;
+        float lost_per_sec; // 每秒丢帧数
+        uint8_t loss_rate_; // loss rate
+        int64_t recv_throughput_bps_; 
         float retrans_num;
-        float send_rate_last;
-        float inter_packet_delay_;
-        int last_encoded_rate_;
+        int64_t last_final_estimation_rate_bps_;
+        float inter_packet_delay_ms_; // delta time
+        int last_encoded_rate_bps_;
+        int64_t last_pacing_rate_bps_;
     };
+    // 仿照delay_based_bwe构造rl_result
+    // struct Result {
+    //     Result();
+    //     Result(bool probe, webrtc::DataRate target_bitrate);
+    //     ~Result() = default;
+    //     bool updated;
+    //     bool probe;
+    //     webrtc::DataRate target_bitrate;
+    //     bool recovered_from_overuse;
+    //     bool backoff_in_alr;
+    // };
+
     struct Result {
         Result();
-        Result(bool probe, webrtc::DataRate target_bitrate);
+        Result(bool use_gcc_result, webrtc::DataRate target_bitrate);
         ~Result() = default;
-        bool updated;
-        bool probe;
-        webrtc::DataRate target_bitrate;
-        bool recovered_from_overuse;
-        bool backoff_in_alr;
+        bool use_gcc_result_;
+        webrtc::DataRate target_bitrate_;
     };
+
     DataPacket rl_packet_;
     Result rl_result;
     int RLSocketInit(SOCKET& RL_socket,int port);
     Result FromRLModule(SOCKET RL_socket);
+    std::string Convert2Json(RLBasedBwe::DataPacket data_packet_);
     void SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket);
     float RecvFromRL(SOCKET RL_socket);
     bool isNotEmpty(DataPacket &data_packet_);
     DataRate getResult(SOCKET RL_socket, float target_rate_float);
-    friend webrtc::DelayBasedBwe::Result toDelayBasedResult(RLBasedBwe::Result RL_result);
+    // friend webrtc::DelayBasedBwe::Result toDelayBasedResult(RLBasedBwe::Result RL_result);
     char* DataConvert(RLBasedBwe::DataPacket &data_packet_, char* converted_data_);
 };
 }

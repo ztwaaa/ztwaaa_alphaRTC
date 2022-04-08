@@ -37,6 +37,8 @@
 #include "rtc_base/experiments/field_trial_parser.h"
 #include "rtc_base/experiments/rate_control_settings.h"
 
+#include "modules/congestion_controller/goog_cc/rl_based_bwe.h"
+
 namespace webrtc {
 struct GoogCcConfig {
   std::unique_ptr<NetworkStateEstimator> network_state_estimator = nullptr;
@@ -69,7 +71,9 @@ class GoogCcNetworkController : public NetworkControllerInterface {
       NetworkStateEstimate msg) override;
 
   NetworkControlUpdate GetNetworkState(Timestamp at_time) const;
-  int last_send_video_stats_;
+  int64_t GetLastPacingRate() {return last_pacing_rate_bps_;}
+  int GetLastEncoderRate() {return last_encoder_rate_bps_;}
+  int64_t GetFinalEstimationRate() {return last_final_estimation_rate_bps_;}
 
  private:
   friend class GoogCcStatePrinter;
@@ -141,6 +145,11 @@ class GoogCcNetworkController : public NetworkControllerInterface {
   absl::optional<DataSize> current_data_window_;
 
   RTC_DISALLOW_IMPLICIT_CONSTRUCTORS(GoogCcNetworkController);
+
+  std::unique_ptr<RLBasedBwe> rl_based_bwe_;
+  int last_encoder_rate_bps_;
+  int64_t last_pacing_rate_bps_;
+  int64_t last_final_estimation_rate_bps_;
 };
 
 }  // namespace webrtc

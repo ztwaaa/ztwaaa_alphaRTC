@@ -1,6 +1,7 @@
 from cgi import print_form
 import socket
 import sys
+import json
 
 def main(port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,7 +29,9 @@ def main(port):
                 client_recv = client_socket.recv(1024)
                 #data = 'hello 20'
                 if client_recv:
-                    print("receive:{}>>>{}".format(client_addr, client_recv))
+                    print("receive:{}>>>{}".format(client_addr, client_recv),'\n')
+                    recv_dict = json.loads(client_recv)
+                    print(recv_dict,'\n')
                     #print(bytes("%s" % data, encoding="utf-8"))
                     client_socket.send(b'5000')
 

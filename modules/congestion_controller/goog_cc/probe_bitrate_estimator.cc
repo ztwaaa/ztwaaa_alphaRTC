@@ -126,7 +126,6 @@ absl::optional<DataRate> ProbeBitrateEstimator::HandleProbeAndEstimateBitrate(
   DataSize send_size = cluster->size_total - cluster->size_last_send;
   DataRate send_rate = send_size / send_interval;
 
-  send_rate_last_time = send_rate_now;
   send_rate_now = send_rate.bps();
 
   // Since the |receive_interval| does not include the time it takes to
