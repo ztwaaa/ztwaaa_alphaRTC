@@ -18,7 +18,7 @@ struct ev_io *libevlist[MAX_CONNECTIONS] = {NULL};
 	result.RTT,
 	result.lost_per_sec,
 	result.loss_rate,
-	result.recv_rate,
+	result.recv_rate_bps_,
 	result.retrans_num,
 	result.send_rate_last
 	);
@@ -88,21 +88,21 @@ void socket_read_callback(struct ev_loop *loop, struct ev_io *watcher, int reven
 				recv_info->RTT,
 				recv_info->lost_per_sec,
 				recv_info->loss_rate,
-				recv_info->recv_rate,
+				recv_info->recv_rate_bps_,
 				recv_info->retrans_num,
 				recv_info->send_rate_last,
-				recv_info->inter_packet_delay_,
-				recv_info->last_encoded_rate_
+				recv_info->inter_packet_delay_ms_,
+				recv_info->last_encoded_rate_bps_
 			);	
 		fd_log 	<<  "recv buff from client! \n" 
 				<<  "RTT:" << recv_info->RTT << "\n"
 				<<  "lost_per_sec:" << recv_info->lost_per_sec << "\n"
 				<<  "loss_rate:" << recv_info->loss_rate << "\n"
-				<< 	"recv_rate:" << recv_info->recv_rate << "\n"
+				<< 	"recv_rate_bps_:" << recv_info->recv_rate_bps_ << "\n"
 				<<  "retrans_num:"  << recv_info->retrans_num  << "\n"
 				<<  "send_rate_last"  << recv_info->send_rate_last << "\n"
-				<<  "inter_packet_delay_"  << recv_info->inter_packet_delay_ << "\n"
-				<<  "last_encoded_rate_"  << recv_info->last_encoded_rate_ << "\n";
+				<<  "inter_packet_delay_ms_"  << recv_info->inter_packet_delay_ms_ << "\n"
+				<<  "last_encoded_rate_bps_"  << recv_info->last_encoded_rate_bps_ << "\n";
 
 		//fd_log  <<  "recv buffer" << buffer;
 	}

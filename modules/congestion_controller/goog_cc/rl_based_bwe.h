@@ -8,6 +8,7 @@
 #include "RL_based_bwe.h"
 #include "api/units/data_rate.h"
 #include "modules/congestion_controller/goog_cc/delay_based_bwe.h"
+
 #ifdef _WIN32
 #include<windows.h>
 #include<winsock2.h>
@@ -22,12 +23,13 @@ public:
     RLBasedBwe();
     struct DataPacket{
         DataPacket();
-        DataPacket( int64_t get_rl_input_time_ms, float rtt_ms, float lost_per_sec,
+        DataPacket( uint32_t send_time_test_, int64_t get_rl_input_time_ms, float rtt_ms, float lost_per_sec,
                     uint8_t loss_rate, int64_t recv_throughput_bps,
                     float retrans_num, int64_t last_final_estimation_rate_bps, float inter_packet_delay_ms,
                     int last_encoded_rate_bps, int64_t last_pacing_rate_bps);
         ~DataPacket() = default;
 
+        uint32_t send_time_test_;
         int64_t get_rl_input_time_ms_; // feedback时间
         float rtt_ms_;
         float lost_per_sec; // 每秒丢帧数
@@ -58,14 +60,14 @@ public:
         bool use_gcc_result_;
         webrtc::DataRate target_bitrate_;
     };
-
+    
     DataPacket rl_packet_;
     Result rl_result;
     int RLSocketInit(SOCKET& RL_socket,int port);
     Result FromRLModule(SOCKET RL_socket);
     std::string Convert2Json(RLBasedBwe::DataPacket data_packet_);
     void SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket);
-    float RecvFromRL(SOCKET RL_socket);
+    void RecvFromRL(SOCKET RL_socket);
     bool isNotEmpty(DataPacket &data_packet_);
     DataRate getResult(SOCKET RL_socket, float target_rate_float);
     // friend webrtc::DelayBasedBwe::Result toDelayBasedResult(RLBasedBwe::Result RL_result);

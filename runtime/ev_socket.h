@@ -15,42 +15,42 @@
 struct DataPacket{
         DataPacket();
         DataPacket( float RTT,float lost_per_sec,
-                    uint8_t loss_rate,float recv_rate,
+                    uint8_t loss_rate,float recv_rate_bps_,
                     float retrans_num,float send_rate_last, float inter_packet_delay,
                     int last_encoded_rate);
         ~DataPacket() = default;
         float RTT;
         float lost_per_sec;
         uint8_t loss_rate;
-        float recv_rate;
+        float recv_rate_bps_;
         float retrans_num;
         float send_rate_last;
-        float inter_packet_delay_;
-        int last_encoded_rate_;
+        float inter_packet_delay_ms_;
+        int last_encoded_rate_bps_;
     };
 DataPacket::DataPacket()
     :   RTT(0),
         lost_per_sec(0),
         loss_rate(0),
-        recv_rate(0),
+        recv_rate_bps_(0),
         retrans_num(0),
         send_rate_last(0),
-        inter_packet_delay_(0),
-        last_encoded_rate_(0) {}
+        inter_packet_delay_ms_(0),
+        last_encoded_rate_bps_(0) {}
 
 DataPacket::DataPacket( float RTT,float lost_per_sec,
-                                    uint8_t loss_rate,float recv_rate,
+                                    uint8_t loss_rate,float recv_rate_bps_,
                                     float retrans_num,float send_rate_last,
                                     float inter_packet_delay,
                                     int last_encoded_rate)
     :   RTT(RTT),
         lost_per_sec(lost_per_sec),
         loss_rate(loss_rate),
-        recv_rate(recv_rate),
+        recv_rate_bps_(recv_rate_bps_),
         retrans_num(retrans_num),
         send_rate_last(send_rate_last),
-        inter_packet_delay_(inter_packet_delay),
-        last_encoded_rate_(last_encoded_rate) {}
+        inter_packet_delay_ms_(inter_packet_delay),
+        last_encoded_rate_bps_(last_encoded_rate) {}
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -575,6 +575,17 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
       alr_start_time.has_value());
   
   RTC_LOG(LS_INFO) << "before rl_packet_";
+  uint32_t send_time_24bits =
+      static_cast<uint32_t>(
+          ((static_cast<uint64_t>(report.feedback_time.ms())
+            << 18) +
+           500) /
+          1000) &
+      0x00FFFFFF;
+  // Shift up send time to use the full 32 bits that inter_arrival works with,
+  // so wrapping works properly.
+  rl_based_bwe_->rl_packet_.send_time_test_ = send_time_24bits << 8;
+
   rl_based_bwe_->rl_packet_.get_rl_input_time_ms_ = report.feedback_time.ms();
   rl_based_bwe_->rl_packet_.rtt_ms_ = bandwidth_estimation_->round_trip_time().ms();
   rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_ = GetFinalEstimationRate();
@@ -675,14 +686,19 @@ void GoogCcNetworkController::MaybeTriggerOnNetworkChanged(
   TimeDelta round_trip_time = bandwidth_estimation_->round_trip_time();
   // 接收AiInfer结果
   rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);
+  RTC_LOG(LS_INFO) << "use_gcc_result_: " << rl_based_bwe_->rl_result.use_gcc_result_;
+  // 使用GCC算法结果
   DataRate loss_based_target_rate = bandwidth_estimation_->target_rate();
-
+  RTC_LOG(LS_INFO) << "GCC result: " << loss_based_target_rate.bps();
   // 接受ai infer调节，不使用GCC算法。
   if(!rl_based_bwe_->rl_result.use_gcc_result_){
     loss_based_target_rate = rl_based_bwe_->rl_result.target_bitrate_;
+    RTC_LOG(LS_INFO) << "ai infer result: " << loss_based_target_rate.bps();
   }
   // 记录本轮最终码率上报结果，用于下一轮发送
   last_final_estimation_rate_bps_ = loss_based_target_rate.bps();
+  RTC_LOG(LS_INFO) << "Final result: " << last_final_estimation_rate_bps_;
+
   DataRate pushback_target_rate = loss_based_target_rate;
 
   BWE_TEST_LOGGING_PLOT(1, "fraction_loss_%", at_time.ms(),
