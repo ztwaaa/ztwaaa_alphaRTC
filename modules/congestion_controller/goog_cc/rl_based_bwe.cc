@@ -181,10 +181,10 @@ void RLBasedBwe::RecvFromRL(SOCKET RL_socket){
             rl_result.use_gcc_result_ = recv_2_json_["use_gcc_result"].asBool();
         }
         if(!recv_2_json_["send_rate"].isNull()){
-            rl_result.target_bitrate_ = webrtc::DataRate::KilobitsPerSec(recv_2_json_["send_rate"].asFloat());
+            rl_result.target_bitrate_ = webrtc::DataRate::BytesPerSec(recv_2_json_["send_rate"].asFloat());
         }
-        RTC_LOG(LS_INFO) << "send_rate:" << recv_2_json_["send_rate"] << "  use_gcc: " << recv_2_json_["use_gcc_result"];
-        RTC_LOG(LS_INFO) << "send_rate:" << rl_result.target_bitrate_.bps() << "  use_gcc: " << rl_result.use_gcc_result_;
+        RTC_LOG(LS_INFO) << "send_rate(Bps):" << recv_2_json_["send_rate"] << "  use_gcc: " << recv_2_json_["use_gcc_result"];
+        RTC_LOG(LS_INFO) << "send_rate(bps):" << rl_result.target_bitrate_.bps() << "  use_gcc: " << rl_result.use_gcc_result_;
 
         return;
     }
