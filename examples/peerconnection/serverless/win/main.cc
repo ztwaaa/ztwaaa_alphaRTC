@@ -30,6 +30,8 @@
 #include "system_wrappers/include/field_trial.h"
 #include "test/field_trial.h"
 
+#include "modules/congestion_controller/goog_cc/rl_based_bwe.h"
+
 int PASCAL wWinMain(HINSTANCE instance,
                     HINSTANCE prev_instance,
                     wchar_t* cmd_line,
@@ -65,6 +67,13 @@ int PASCAL wWinMain(HINSTANCE instance,
       new rtc::RefCountedObject<Conductor>(&client, &wnd));
 
   auto config = webrtc::GetAlphaCCConfig();
+
+  if(config->onnx_model_path.empty()){
+    int port = config->socket_server_port;
+    std::unique_ptr<webrtc::RLBasedBwe> rl_based_bwe_ = std::make_unique<webrtc::RLBasedBwe>();
+    rl_based_bwe_->RLSocketInit(RL_Socket, config->socket_server_ip, port);
+  }
+
   if (config->is_receiver) {
     client.StartListen(config->listening_ip, config->listening_port);
   }

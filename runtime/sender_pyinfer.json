@@ -10,7 +10,13 @@
             "enabled": false
         }
     },
+    
     "bwe_algo": "gcc",
+    "socket_config": {
+        "socket_server_ip": "192.168.0.189",
+        "socket_server_port": 4321
+    },
+
     "bwe_feedback_duration": 200,
     "video_source": {
         "video_disabled": {

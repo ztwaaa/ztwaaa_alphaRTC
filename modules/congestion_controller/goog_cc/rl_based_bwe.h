@@ -63,7 +63,7 @@ public:
     
     DataPacket rl_packet_;
     Result rl_result;
-    int RLSocketInit(SOCKET& RL_socket,int port);
+    int RLSocketInit(SOCKET& RL_socket, std::string ip, int port);
     Result FromRLModule(SOCKET RL_socket);
     std::string Convert2Json(RLBasedBwe::DataPacket data_packet_);
     void SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket);

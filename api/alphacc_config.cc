@@ -67,6 +67,12 @@ bool ParseAlphaCCConfig(const std::string& file_path) {
 
   RETURN_ON_FAIL(
       GetString(top, "bwe_algo", &config->bwe_algo));
+      
+  if(GetValue(top, "socket_config", &second)) {
+    RETURN_ON_FAIL(GetString(second, "socket_server_ip", &config->socket_server_ip));
+    RETURN_ON_FAIL(GetInt(second, "socket_server_port", &config->socket_server_port));
+  }
+  second.clear();
 
   RETURN_ON_FAIL(
       GetInt(top, "bwe_feedback_duration", &config->bwe_feedback_duration_ms));

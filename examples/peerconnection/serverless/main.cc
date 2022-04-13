@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
   }
 
   const auto json_file_path = argv[1];
-  int port = atoi(argv[2]);
+
   if (!webrtc::ParseAlphaCCConfig(json_file_path)) {
     std::cerr << "bad config file" << std::endl;
     exit(EINVAL);
@@ -137,14 +137,13 @@ int main(int argc, char* argv[]) {
   std::unique_ptr<FileLogSink> sink;
   std::cout<<config->onnx_model_path.c_str()<<std::endl;
   std::cout<<argc<<std::endl;
-  /*if(config->onnx_model_path.empty() && argc==3){
-    std::cout<<"main init\n"<<std::endl;
-    cmdinfer::init_socket(argv[2]);
-  }*/
-  /*新增*/
-  //初始化RL_socket
-  std::unique_ptr<webrtc::RLBasedBwe> rl_based_bwe_ = std::make_unique<webrtc::RLBasedBwe>();
-  rl_based_bwe_->RLSocketInit(RL_Socket,port);
+  
+  if(config->onnx_model_path.empty()){
+    int port = config->socket_server_port;
+    std::unique_ptr<webrtc::RLBasedBwe> rl_based_bwe_ = std::make_unique<webrtc::RLBasedBwe>();
+    rl_based_bwe_->RLSocketInit(RL_Socket, config->socket_server_ip, port);
+  }
+
   if (config->save_log_to_file) {
     sink = std::make_unique<FileLogSink>(config->log_output_path);
   }

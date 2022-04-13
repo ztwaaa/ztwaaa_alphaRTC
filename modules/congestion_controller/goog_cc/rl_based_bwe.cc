@@ -3,6 +3,8 @@
 // #include "modules/third_party/statcollect/json.hpp"
 #include "rtc_base/logging.h"
 #include "rtc_base/strings/json.h"
+#include "api/alphacc_config.h"
+
 
 #include <iostream>
 #include<cstring>
@@ -14,11 +16,11 @@
 #include<linux/socket.h>
 #endif
 /*RL socket*/
-SOCKET RL_Socket;
+SOCKET RL_Socket = -1;
 
 namespace webrtc{
 RLBasedBwe::RLBasedBwe():rl_packet_(),rl_result(){}
-int RLBasedBwe::RLSocketInit(SOCKET& RL_socket,int port){
+int RLBasedBwe::RLSocketInit(SOCKET& RL_socket, std::string ip, int port){
     struct sockaddr_in server_in; 
     WORD socket_version;
     WSADATA wsadata; 
@@ -49,7 +51,7 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket,int port){
     }
     server_in.sin_family = AF_INET;    //IPV4协议族
     server_in.sin_port = htons(port);  //服务器的端口号
-    server_in.sin_addr.S_un.S_addr = inet_addr("192.168.0.189"); //服务IP
+    server_in.sin_addr.S_un.S_addr = inet_addr(ip.c_str()); //服务IP
     while(connect(RL_socket, (struct sockaddr *)&server_in, sizeof(server_in)) == SOCKET_ERROR)
     {
         //printf("connect error\n");
@@ -236,7 +238,11 @@ DataRate RLBasedBwe::getResult(SOCKET RL_socket, float target_rate_float){
 /**/
 RLBasedBwe::Result RLBasedBwe::FromRLModule(SOCKET RL_socket){
     // int ret = RecvFromRL(RL_socket);
-    RTC_LOG(LS_INFO) << "sock test! FromRLModule";
+
+    if(RL_socket < 0){
+        return Result();
+    }
+    RTC_LOG(LS_INFO) << "sock test! FromRLModule: " << RL_socket;
     RecvFromRL(RL_socket);
     return rl_result.use_gcc_result_ ? Result() : Result(rl_result.use_gcc_result_, rl_result.target_bitrate_);
 }
