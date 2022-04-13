@@ -47,7 +47,7 @@ int PASCAL wWinMain(HINSTANCE instance,
       "WebRTC-KeepAbsSendTimeExtension/Enabled/");  //  Config for
                                                     //  hasAbsSendTimestamp in
                                                     //  RTP Header extension
-
+  
   // Read the json-format configuration file.
   // File path is passed through |cmd_line|
   char cmd_line_s[1024];
@@ -56,6 +56,19 @@ int PASCAL wWinMain(HINSTANCE instance,
     RTC_NOTREACHED();
     return -1;
   };
+
+  auto config = webrtc::GetAlphaCCConfig();
+  if (strcmp(config->bwe_algo.c_str(), "default") != 0){
+    webrtc::field_trial::InitFieldTrialsFromString(
+      "WebRTC-Bwe-InjectedCongestionController/Enabled/");
+  }                                         
+
+  if(config->onnx_model_path.empty()){
+    int port = config->socket_server_port;
+    std::unique_ptr<webrtc::RLBasedBwe> rl_based_bwe_ = std::make_unique<webrtc::RLBasedBwe>();
+    rl_based_bwe_->RLSocketInit(RL_Socket, config->socket_server_ip, port);
+  }
+
   MainWnd wnd;
   if (!wnd.Create()) {
     RTC_NOTREACHED();
@@ -66,13 +79,7 @@ int PASCAL wWinMain(HINSTANCE instance,
   rtc::scoped_refptr<Conductor> conductor(
       new rtc::RefCountedObject<Conductor>(&client, &wnd));
 
-  auto config = webrtc::GetAlphaCCConfig();
 
-  if(config->onnx_model_path.empty()){
-    int port = config->socket_server_port;
-    std::unique_ptr<webrtc::RLBasedBwe> rl_based_bwe_ = std::make_unique<webrtc::RLBasedBwe>();
-    rl_based_bwe_->RLSocketInit(RL_Socket, config->socket_server_ip, port);
-  }
 
   if (config->is_receiver) {
     client.StartListen(config->listening_ip, config->listening_port);

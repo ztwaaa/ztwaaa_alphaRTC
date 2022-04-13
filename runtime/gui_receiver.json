@@ -18,18 +18,16 @@
     },
 
     "bwe_feedback_duration": 200,
-    "onnx": {
-        "onnx_model_path": "onnx-model.onnx"
-    },
+
     "video_source": {
         "video_disabled": {
             "enabled": false
         },
         "webcam": {
-            "enabled": true
+            "enabled": false
         },
         "video_file": {
-            "enabled": false,
+            "enabled": true,
             "height": 240,
             "width": 320,
             "fps": 10,
@@ -46,7 +44,7 @@
         }
     },
     "save_to_file": {
-        "enabled": false,
+        "enabled": true,
         "audio": {
             "file_path": "outaudio.wav"
         },
