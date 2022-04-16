@@ -19,7 +19,12 @@
 SOCKET RL_Socket = -1;
 
 namespace webrtc{
-RLBasedBwe::RLBasedBwe():rl_packet_(),rl_result(){}
+RLBasedBwe::RLBasedBwe()
+    :
+        to_recv_ai_fb_(false),
+        rl_packet_(),
+        rl_result() {}
+
 int RLBasedBwe::RLSocketInit(SOCKET& RL_socket, std::string ip, int port){
     struct sockaddr_in server_in; 
     WORD socket_version;
@@ -54,17 +59,12 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket, std::string ip, int port){
     server_in.sin_addr.S_un.S_addr = inet_addr(ip.c_str()); //服务IP
     while(connect(RL_socket, (struct sockaddr *)&server_in, sizeof(server_in)) == SOCKET_ERROR)
     {
-        //printf("connect error\n");
-        RTC_LOG(LS_INFO) << "sock test! socket connect error\n";
         int err=WSAGetLastError();
         RTC_LOG(LS_INFO) << "sock test! socket-err-code: " << err;
         if(err!=10035)
             break;
-        //system("pause");
-        //return 1;
     }
 
-    //printf("connect %s:%d\n", inet_ntoa(server_in.sin_addr), server_in.sin_port);
     RTC_LOG(LS_INFO) << "sock test! socket connect "<< inet_ntoa(server_in.sin_addr) <<":"<< server_in.sin_port;
     return 0;
 }
@@ -75,7 +75,6 @@ std::string RLBasedBwe::Convert2Json(RLBasedBwe::DataPacket data_packet_){
     Json::StreamWriterBuilder writerBuilder;
     std::ostringstream os;
 
-    input_to_send["send_time_test_"] = Json::Value(data_packet_.send_time_test_);
     input_to_send["get_rl_input_time_ms"] = Json::Value(data_packet_.get_rl_input_time_ms_);
     input_to_send["rtt_ms"] = Json::Value(data_packet_.rtt_ms_);
     input_to_send["last_final_estimation_rate_bps"] = Json::Value(data_packet_.last_final_estimation_rate_bps_);
@@ -111,39 +110,19 @@ void RLBasedBwe::SendToRL(RLBasedBwe::DataPacket data_packet_,SOCKET RL_socket){
     RTC_LOG(LS_INFO) << "socket-err-code" << err;*/
     
     std::string sendbuf = Convert2Json(data_packet_);
-    send(RL_Socket, sendbuf.c_str(), sendbuf.size(), 0);
-    // char msg[1024];
-    // sprintf(msg,"rtt_ms_: %f last_final_estimation_rate_bps_ %lld loss_rate %d recv_throughput_bps_ %lld inter_packet_delay_ms_ %f last_encoded_rate_bps_ %d",
-    //                         data_packet_.rtt_ms_,
-    //                         data_packet_.last_final_estimation_rate_bps_,
-    //                         data_packet_.loss_rate_, 
-    //                         data_packet_.recv_throughput_bps_,
-    //                         data_packet_.inter_packet_delay_ms_,
-    //                         data_packet_.last_encoded_rate_bps_);
-    // send(RL_socket,msg,strlen(msg),0);
-    // RTC_LOG(LS_INFO) << "data to send: " << msg;
-    int err = WSAGetLastError();
-    RTC_LOG(LS_INFO) << "sock test! socket-err-code: " << err;
-    //exception  handle
-    
-    /*if(ret > 0)
-    {
-        return 
+    int ret = send(RL_Socket, sendbuf.c_str(), sendbuf.size(), 0);
+    if (ret == SOCKET_ERROR){
+        int err = WSAGetLastError();
+        RTC_LOG(LS_INFO) << "sock test! socket-err-code: " << err;
+        // 如果发送失败，直接不接收socket recv.
+        to_recv_ai_fb_ = false;
     }
-    else if(ret == 0)
-    {
-        //当ret == 0 说明服务器掉线。
-        printf("lost connection , Ip = %s\n", inet_ntoa(server_in.sin_addr));
-        exit(1);
+    else {
+        RTC_LOG(LS_INFO) << "sock test! socket send successfully! ";
+        // 如果发送成功，【准备】执行socket recv.（因为也不一定后面的程序能够接收成功）
+        // or 理解为，只要发送成功就可以尝试接收
+        to_recv_ai_fb_ = true;
     }
-    else//ret < 0
-    {
-        //当ret < 0 说明出现了异常 例如阻塞状态解除，或者读取数据时出现指针错误等。
-        //所以我们这里要主动断开和客户端的链接。
-        printf("something wrong of %s\n", inet_ntoa(server_in.sin_addr));
-        closesocket(socket_client);
-        exit(1);  
-    }*/
 }
 
 
@@ -153,9 +132,16 @@ void RLBasedBwe::RecvFromRL(SOCKET RL_socket){
     Json::Value recv_2_json_;
     char recData[1024]="";
     int ret,err;
-    RTC_LOG(LS_INFO) << "sock test! RecvFromRL ";
+
+    RTC_LOG(LS_INFO) << "sock test! RecvFromRL: " << RL_socket;
+    
     ret = recv(RL_socket, recData, 1024, 0);
     if(ret == SOCKET_ERROR){
+        
+        // 无论什么原因，只要接收失败就使用原始的gcc策略
+        rl_result.use_gcc_result_ = true;
+        RTC_LOG(LS_INFO) << "sock test! sock recv failed! use dafault gcc.";
+
         err = WSAGetLastError();
         if(err==WSAEWOULDBLOCK){
             RTC_LOG(LS_INFO) << "sock test! ERROR: " << err ;
@@ -177,23 +163,32 @@ void RLBasedBwe::RecvFromRL(SOCKET RL_socket){
         }
     }
     else{
+        int fd_id = -1;
+
         recData[ret] = 0x00;
         recv_reader_.parse(recData, recv_2_json_);
+
+        // 接收成功时，是否使用gcc算法由ai agent决定.
         if(!recv_2_json_["use_gcc_result"].isNull()){
             rl_result.use_gcc_result_ = recv_2_json_["use_gcc_result"].asBool();
         }
         if(!recv_2_json_["send_rate"].isNull()){
             rl_result.target_bitrate_ = webrtc::DataRate::BytesPerSec(recv_2_json_["send_rate"].asFloat());
         }
-        RTC_LOG(LS_INFO) << "send_rate(Bps):" << recv_2_json_["send_rate"] << "  use_gcc: " << recv_2_json_["use_gcc_result"];
-        RTC_LOG(LS_INFO) << "send_rate(bps):" << rl_result.target_bitrate_.bps() << "  use_gcc: " << rl_result.use_gcc_result_;
+        if(!recv_2_json_["fd_id"].isNull()){
+            fd_id = recv_2_json_["fd_id"].asInt();
+        }
 
-        return;
+        RTC_LOG(LS_INFO)    << "ai estimated result(Bps):" << recv_2_json_["send_rate"] 
+                            << " use_gcc: " << recv_2_json_["use_gcc_result"]
+                            << " fd_id: " << fd_id;
+        RTC_LOG(LS_INFO) << "ai estimated result(bps):" << rl_result.target_bitrate_.bps() << "  use_gcc: " << rl_result.use_gcc_result_;
     }
+    
+    return;
 }
 RLBasedBwe::DataPacket::DataPacket()
     :   
-        send_time_test_(0),
         get_rl_input_time_ms_(0),
         rtt_ms_(0),
         lost_per_sec(0),
@@ -205,12 +200,12 @@ RLBasedBwe::DataPacket::DataPacket()
         last_encoded_rate_bps_(0),
         last_pacing_rate_bps_(0) {}
 
-RLBasedBwe::DataPacket::DataPacket( uint32_t send_time_test, int64_t get_rl_input_time_ms, float rtt, float lost_per_sec,
+RLBasedBwe::DataPacket::DataPacket( int64_t get_rl_input_time_ms, float rtt, float lost_per_sec,
                                     uint8_t loss_rate, int64_t recv_throughput_bps,
                                     float retrans_num, int64_t last_final_estimation_rate_bps,
                                     float inter_packet_delay,
                                     int last_encoded_rate, int64_t last_pacing_rate_bps)
-    :   send_time_test_(send_time_test),
+    :   
         get_rl_input_time_ms_(get_rl_input_time_ms),
         rtt_ms_(rtt),
         lost_per_sec(lost_per_sec),
@@ -237,12 +232,9 @@ DataRate RLBasedBwe::getResult(SOCKET RL_socket, float target_rate_float){
 
 /**/
 RLBasedBwe::Result RLBasedBwe::FromRLModule(SOCKET RL_socket){
-    // int ret = RecvFromRL(RL_socket);
-
     if(RL_socket < 0){
         return Result();
     }
-    RTC_LOG(LS_INFO) << "sock test! FromRLModule: " << RL_socket;
     RecvFromRL(RL_socket);
     return rl_result.use_gcc_result_ ? Result() : Result(rl_result.use_gcc_result_, rl_result.target_bitrate_);
 }

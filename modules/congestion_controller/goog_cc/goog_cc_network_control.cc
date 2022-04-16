@@ -428,7 +428,7 @@ void GoogCcNetworkController::UpdateCongestionWindowSize() {
 NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
     TransportPacketsFeedback report) {
   
-  RTC_LOG(LS_INFO) << "OnTransportPacketsFeedback";
+  RTC_LOG(LS_INFO) << "OnTransportPacketsFeedback start";
   if (report.packet_feedbacks.empty()) {
     // TODO(bugs.webrtc.org/10125): Design a better mechanism to safe-guard
     // against building very large network queues.
@@ -574,18 +574,16 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
       report, acknowledged_bitrate, probe_bitrate, estimate_,
       alr_start_time.has_value());
   
-  RTC_LOG(LS_INFO) << "before rl_packet_";
-  uint32_t send_time_24bits =
-      static_cast<uint32_t>(
-          ((static_cast<uint64_t>(report.feedback_time.ms())
-            << 18) +
-           500) /
-          1000) &
-      0x00FFFFFF;
+  // RTC_LOG(LS_INFO) << "before rl_packet_";
+  // uint32_t send_time_24bits =
+  //     static_cast<uint32_t>(
+  //         ((static_cast<uint64_t>(report.feedback_time.ms())
+  //           << 18) +
+  //          500) /
+  //         1000) &
+  //     0x00FFFFFF;
   // Shift up send time to use the full 32 bits that inter_arrival works with,
   // so wrapping works properly.
-  rl_based_bwe_->rl_packet_.send_time_test_ = send_time_24bits << 8;
-
   rl_based_bwe_->rl_packet_.get_rl_input_time_ms_ = report.feedback_time.ms();
   rl_based_bwe_->rl_packet_.rtt_ms_ = bandwidth_estimation_->round_trip_time().ms();
   rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_ = GetFinalEstimationRate();
@@ -597,15 +595,16 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   rl_based_bwe_->rl_packet_.last_encoded_rate_bps_ = GetLastEncoderRate();
   rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastPacingRate();
 
-  rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
-  RTC_LOG(LS_INFO) << "last_encoder_rate_bps_: " << last_encoder_rate_bps_;
-  RTC_LOG(LS_INFO) << "last_encoded_rate_bps_: " << rl_based_bwe_->rl_packet_.last_encoded_rate_bps_;
+  RTC_LOG(LS_INFO)  << " get_rl_input_time_ms_: "            << rl_based_bwe_->rl_packet_.get_rl_input_time_ms_
+                    << " rtt_ms_: "                          << rl_based_bwe_->rl_packet_.rtt_ms_
+                    << " last_final_estimation_rate_bps_: "  << rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_
+                    << " loss_rate_: "                       << rl_based_bwe_->rl_packet_.loss_rate_
+                    << " recv_throughput_bps_: "             << rl_based_bwe_->rl_packet_.recv_throughput_bps_
+                    << " inter_packet_delay_ms_: "           << rl_based_bwe_->rl_packet_.inter_packet_delay_ms_
+                    << " last_encoded_rate_bps_: "           << rl_based_bwe_->rl_packet_.last_encoded_rate_bps_
+                    << " last_pacing_rate_bps_: "            << rl_based_bwe_->rl_packet_.last_pacing_rate_bps_;
 
-  /*new*/
-  // rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);
-  // 如果直接用FromRLModule代替delay_based_bwe会影响下一轮GCC决策 
-  //result = toDelayBasedResult(rl_based_bwe_->rl_result);
-  /*end*/
+  rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
   
   if (result.updated) {
     if (result.probe) {
@@ -648,7 +647,7 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   } else {
     update.congestion_window = current_data_window_;
   }
-
+  RTC_LOG(LS_INFO) << "OnTransportPacketsFeedback end.";
   return update;
 }
 
@@ -684,8 +683,15 @@ void GoogCcNetworkController::MaybeTriggerOnNetworkChanged(
     Timestamp at_time) {
   uint8_t fraction_loss = bandwidth_estimation_->fraction_loss();
   TimeDelta round_trip_time = bandwidth_estimation_->round_trip_time();
-  // 接收AiInfer结果
-  rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);
+  
+  // 如果是OnTransportPacketsFeedback调用MaybeTriggerOnNetworkChanged才执行socket recv.
+  if(rl_based_bwe_->to_recv_ai_fb_){
+    // 接收AiInfer结果
+    rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);
+    // 不论接收成功还是失败，都关闭to_recv_ai_fb_，在下一次OnTransportPacketsFeedback时由SendToRL进行新的决策
+    rl_based_bwe_->to_recv_ai_fb_ = false;
+  }
+  
   RTC_LOG(LS_INFO) << "use_gcc_result_: " << rl_based_bwe_->rl_result.use_gcc_result_;
   // 使用GCC算法结果
   DataRate loss_based_target_rate = bandwidth_estimation_->target_rate();

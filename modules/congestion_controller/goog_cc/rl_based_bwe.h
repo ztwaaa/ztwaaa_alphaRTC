@@ -23,13 +23,12 @@ public:
     RLBasedBwe();
     struct DataPacket{
         DataPacket();
-        DataPacket( uint32_t send_time_test_, int64_t get_rl_input_time_ms, float rtt_ms, float lost_per_sec,
+        DataPacket( int64_t get_rl_input_time_ms, float rtt_ms, float lost_per_sec,
                     uint8_t loss_rate, int64_t recv_throughput_bps,
                     float retrans_num, int64_t last_final_estimation_rate_bps, float inter_packet_delay_ms,
                     int last_encoded_rate_bps, int64_t last_pacing_rate_bps);
         ~DataPacket() = default;
 
-        uint32_t send_time_test_;
         int64_t get_rl_input_time_ms_; // feedback时间
         float rtt_ms_;
         float lost_per_sec; // 每秒丢帧数
@@ -60,7 +59,8 @@ public:
         bool use_gcc_result_;
         webrtc::DataRate target_bitrate_;
     };
-    
+
+    bool to_recv_ai_fb_;
     DataPacket rl_packet_;
     Result rl_result;
     int RLSocketInit(SOCKET& RL_socket, std::string ip, int port);
