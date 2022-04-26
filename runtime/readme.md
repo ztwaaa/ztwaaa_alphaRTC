@@ -48,7 +48,10 @@ python baseline-ppo/baseline/PPO/main.py '192.168.0.189' 1234
 ```
 python baseline-ppo/baseline/PPO/main.py '192.168.0.189' 4321
 ```
-等待两个进程都出现：`"Waiting for connection... Server IP: 192.168.0.189, PORT: 4321"`字样再执行下一步
+**1. 等待两个进程都出现：`"Waiting for connection... Server IP: 192.168.0.189, PORT: 4321"`字样再执行下一步**
+
+**2. 不建议使用127.0.0.1** 
+
 * [config files参数说明](https://github.com/OpenNetLab/AlphaRTC#configurations-for-peerconnection_serverless)
 
     - 修改：
@@ -68,15 +71,15 @@ python baseline-ppo/baseline/PPO/main.py '192.168.0.189' 4321
 
     在`runtime\`目录下，运行:
     ```
-    peerconnection_serverless.exe configfile.json server_port
+    peerconnection_serverless.exe configfile.json
     ```
     先执行receiver
     ```
-    ..\out\test\peerconnection_serverless.exe .\receiver_pyinfer.json 1234
+    ..\out\test\peerconnection_serverless.exe .\receiver_pyinfer.json
     ```
     后执行sender
     ```
-    ..\out\test\peerconnection_serverless.exe .\sender_pyinfer.json 4321
+    ..\out\test\peerconnection_serverless.exe .\sender_pyinfer.json
     ```
 
 * 传输文件或摄像头采集视频流，GUI播放（仅win可用）:
@@ -86,15 +89,15 @@ python baseline-ppo/baseline/PPO/main.py '192.168.0.189' 4321
     gn gen out\test
     ninja -C .\out\test peerconnection_serverless_win_gui
     ```
-    - 运行，config文件参考gui_receiver.json和fui_sender.json
+    - 运行，config文件参考gui_receiver.json和gui_sender.json
     ```
-    peerconnection_serverless_win_gui.exe configfile.json server_port
+    peerconnection_serverless_win_gui.exe configfile.json 
     ```
     先执行receiver
     ```
-    ..\out\test\peerconnection_serverless_win_gui.exe .\receiver_pyinfer.json 1234
+    ..\out\test\peerconnection_serverless_win_gui.exe .\receiver_pyinfer.json
     ```
     后执行sender
     ```
-    ..\out\test\peerconnection_serverless_win_gui.exe .\sender_pyinfer.json 4321
+    ..\out\test\peerconnection_serverless_win_gui.exe .\sender_pyinfer.json
     ```
