@@ -60,8 +60,8 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket, std::string ip, int port){
     while(connect(RL_socket, (struct sockaddr *)&server_in, sizeof(server_in)) == SOCKET_ERROR)
     {
         int err=WSAGetLastError();
-        RTC_LOG(LS_INFO) << "sock test! socket-err-code: " << err;
-        if(err!=10035)
+        // RTC_LOG(LS_INFO) << "sock test! socket-err-code: " << err;
+        if(err == 10056)
             break;
     }
 
