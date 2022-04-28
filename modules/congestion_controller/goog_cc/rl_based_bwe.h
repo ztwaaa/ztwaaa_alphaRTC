@@ -26,7 +26,7 @@ public:
         DataPacket( int64_t get_rl_input_time_ms, float rtt_ms, float lost_per_sec,
                     uint8_t loss_rate, int64_t recv_throughput_bps,
                     float retrans_num, int64_t last_final_estimation_rate_bps, float inter_packet_delay_ms,
-                    int last_encoded_rate_bps, int64_t last_pacing_rate_bps);
+                    int last_encoded_rate_bps, uint32_t last_pacing_rate_bps);
         ~DataPacket() = default;
 
         int64_t get_rl_input_time_ms_; // feedback时间
@@ -38,7 +38,7 @@ public:
         int64_t last_final_estimation_rate_bps_;
         float inter_packet_delay_ms_; // delta time
         int last_encoded_rate_bps_;
-        int64_t last_pacing_rate_bps_;
+        uint32_t last_pacing_rate_bps_;
     };
     // 仿照delay_based_bwe构造rl_result
     // struct Result {

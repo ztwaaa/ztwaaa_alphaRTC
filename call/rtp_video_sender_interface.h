@@ -63,8 +63,10 @@ class RtpVideoSenderInterface : public EncodedImageCallback,
       uint32_t ssrc,
       rtc::ArrayView<const uint16_t> sequence_numbers) const = 0;
 
+  virtual uint32_t GetSentVideoRateBps() const = 0;
   // Implements FecControllerOverride.
   void SetFecAllowed(bool fec_allowed) override = 0;
+
 };
 }  // namespace webrtc
 #endif  // CALL_RTP_VIDEO_SENDER_INTERFACE_H_

@@ -53,7 +53,7 @@ constexpr TimeDelta kLossUpdateInterval = TimeDelta::Millis(1000);
 // the number of bytes that can be transmitted per interval.
 // Increasing this factor will result in lower delays in cases of bitrate
 // overshoots from the encoder.
-constexpr float kDefaultPaceMultiplier = 1.0f;
+constexpr float kDefaultPaceMultiplier = 2.5f;
 
 // If the probe result is far below the current throughput estimate
 // it's unlikely that the probe is accurate, so we don't want to drop too far.
@@ -342,8 +342,9 @@ NetworkControlUpdate GoogCcNetworkController::OnStreamsConfig(
 
 void GoogCcNetworkController::OnRlBweConfig(
     RlBweConfig msg) {
-  last_encoder_rate_bps_ = msg.video_stats;
-  RTC_LOG(LS_INFO) << "OnRlBweConfig video_send_statitics_: " << last_encoder_rate_bps_;
+  last_rl_bwe_params_.reals_encode_bitrate_bps = msg.reals_encode_bitrate_bps;
+  last_rl_bwe_params_.target_encode_rate_bps = msg.target_encode_rate_bps;
+  last_rl_bwe_params_.sent_video_rate_bps = msg.sent_video_rate_bps;
   return;
 }
 
@@ -592,8 +593,9 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
     rl_based_bwe_->rl_packet_.recv_throughput_bps_ = acknowledged_bitrate.value().bps();
   }
   rl_based_bwe_->rl_packet_.inter_packet_delay_ms_ = delay_based_bwe_->get_recv_delta_ms()-delay_based_bwe_->get_send_delta_ms();
-  rl_based_bwe_->rl_packet_.last_encoded_rate_bps_ = GetLastEncoderRate();
-  rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastPacingRate();
+  rl_based_bwe_->rl_packet_.last_encoded_rate_bps_ = GetLastEncoderRate().reals_encode_bitrate_bps;
+  rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastEncoderRate().sent_video_rate_bps;
+  // rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastPacingRate();
 
   RTC_LOG(LS_INFO)  << " get_rl_input_time_ms_: "            << rl_based_bwe_->rl_packet_.get_rl_input_time_ms_
                     << " rtt_ms_: "                          << rl_based_bwe_->rl_packet_.rtt_ms_

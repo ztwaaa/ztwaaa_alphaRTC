@@ -26,7 +26,7 @@
 
 namespace webrtc {
 const int64_t PacedSender::kMaxQueueLengthMs = 2000;
-const float PacedSender::kDefaultPaceMultiplier = 1.0f;
+const float PacedSender::kDefaultPaceMultiplier = 2.5f;
 
 PacedSender::PacedSender(Clock* clock, PacketRouter* packet_router,
                          RtcEventLog* event_log,

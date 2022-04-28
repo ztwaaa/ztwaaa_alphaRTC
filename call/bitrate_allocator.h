@@ -36,7 +36,7 @@ class BitrateAllocatorObserver {
   // Returns the amount of protection used by the BitrateAllocatorObserver
   // implementation, as bitrate in bps.
   virtual uint32_t OnBitrateUpdated(BitrateAllocationUpdate update) = 0;
-  virtual int OnEncodedBitrateUpdated(BitrateAllocationUpdate update) = 0;
+  virtual RLBweParams OnEncodedBitrateUpdated(BitrateAllocationUpdate update) = 0;
 
  protected:
   virtual ~BitrateAllocatorObserver() {}
@@ -135,7 +135,7 @@ class BitrateAllocator : public BitrateAllocatorInterface {
   // Returns initial bitrate allocated for |observer|. If |observer| is not in
   // the list of added observers, a best guess is returned.
   int GetStartBitrate(BitrateAllocatorObserver* observer) const override;
-  int GetRlBwe() {return video_send_statitics_;}
+  RLBweParams GetRlBwe() {return rl_bwe_params_;}
 
  private:
   using AllocatableTrack = bitrate_allocator_impl::AllocatableTrack;
@@ -166,6 +166,7 @@ class BitrateAllocator : public BitrateAllocatorInterface {
   int64_t last_bwe_log_time_ RTC_GUARDED_BY(&sequenced_checker_);
   BitrateAllocationLimits current_limits_ RTC_GUARDED_BY(&sequenced_checker_);
   int video_send_statitics_;
+  RLBweParams rl_bwe_params_;
 };
 
 }  // namespace webrtc

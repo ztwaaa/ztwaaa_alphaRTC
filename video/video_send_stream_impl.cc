@@ -225,7 +225,8 @@ VideoSendStreamImpl::VideoSendStreamImpl(
                                            std::move(fec_controller),
                                            CreateFrameEncryptionConfig(config_),
                                            config->frame_transformer)),
-      weak_ptr_factory_(this) {
+      weak_ptr_factory_(this),
+      sent_video_rate_bps_(0) {
   video_stream_encoder->SetFecControllerOverride(rtp_video_sender_);
   RTC_DCHECK_RUN_ON(worker_queue_);
   RTC_LOG(LS_INFO) << "VideoSendStreamInternal: " << config_->ToString();
@@ -622,6 +623,8 @@ uint32_t VideoSendStreamImpl::OnBitrateUpdated(BitrateAllocationUpdate update) {
   }
 
   rtp_video_sender_->OnBitrateUpdated(update, stats_proxy_->GetSendFrameRate());
+  sent_video_rate_bps_ = rtp_video_sender_->GetSentVideoRateBps();
+
   encoder_target_rate_bps_ = rtp_video_sender_->GetPayloadBitrateBps();
   RTC_LOG(LS_INFO) << "GetPayloadBitrateBps: "<< encoder_target_rate_bps_;
   const uint32_t protection_bitrate_bps =
@@ -662,13 +665,20 @@ uint32_t VideoSendStreamImpl::OnBitrateUpdated(BitrateAllocationUpdate update) {
   return protection_bitrate_bps;
 }
 
-int VideoSendStreamImpl::OnEncodedBitrateUpdated(BitrateAllocationUpdate update){
-  int res_media_bitrate_bps = stats_proxy_->GetStats().media_bitrate_bps;
-  int res_encoder_target_rate_bps_ = encoder_target_rate_bps_;
-  RTC_LOG(LS_INFO) << "VideoSendStreamImpl media_bitrate_bps:" << res_media_bitrate_bps;
-  RTC_LOG(LS_INFO) << "VideoSendStreamImpl encoder_target_rate_bps_:" << res_encoder_target_rate_bps_;
+RLBweParams VideoSendStreamImpl::OnEncodedBitrateUpdated(BitrateAllocationUpdate update){
+  RLBweParams rl_bwe_params;
 
-  return res_media_bitrate_bps;
+  rl_bwe_params.is_video_send = 1;
+  
+  rl_bwe_params.reals_encode_bitrate_bps = stats_proxy_->GetStats().media_bitrate_bps;
+  rl_bwe_params.sent_video_rate_bps = sent_video_rate_bps_;
+  rl_bwe_params.target_encode_rate_bps = encoder_target_rate_bps_;
+
+  RTC_LOG(LS_INFO) << "VideoSendStreamImpl reals_encode_bitrate_bps:" << rl_bwe_params.reals_encode_bitrate_bps;
+  RTC_LOG(LS_INFO) << "VideoSendStreamImpl target_encode_rate_bps:" << rl_bwe_params.target_encode_rate_bps;
+  RTC_LOG(LS_INFO) << "VideoSendStreamImpl sent_video_rate_bps:" << rl_bwe_params.sent_video_rate_bps;
+
+  return rl_bwe_params;
 }
 
 }  // namespace internal

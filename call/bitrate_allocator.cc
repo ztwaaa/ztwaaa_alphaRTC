@@ -402,7 +402,6 @@ void BitrateAllocator::OnNetworkEstimateChanged(TargetTransferRate msg) {
 
   int count_config = 0;
   int count_observer = 0;
-  int track_encoder_rate = 0;
 
   for (auto& config : allocatable_tracks_) {
     uint32_t allocated_bitrate = allocation[config.observer];
@@ -421,12 +420,17 @@ void BitrateAllocator::OnNetworkEstimateChanged(TargetTransferRate msg) {
     update.cwnd_reduce_ratio = msg.cwnd_reduce_ratio;
     uint32_t protection_bitrate = config.observer->OnBitrateUpdated(update);
 
-    track_encoder_rate = config.observer->OnEncodedBitrateUpdated(update);
-    
-    if(track_encoder_rate > 0){
-      video_send_statitics_ = track_encoder_rate;
+    RLBweParams tmp_rl_bwe_params = config.observer->OnEncodedBitrateUpdated(update);
+
+    if (tmp_rl_bwe_params.is_video_send) {
+      // video才更新
       count_observer++;
-      RTC_LOG(LS_INFO) << "count_observer: "<< count_observer << ", total video_send_statitics_:" << video_send_statitics_; 
+      rl_bwe_params_ = tmp_rl_bwe_params;
+      RTC_LOG(LS_INFO) << "count_observer: "             << count_observer
+                       << " is_video_send: "             << rl_bwe_params_.is_video_send
+                       << " reals_encode_bitrate_bps: "  << rl_bwe_params_.reals_encode_bitrate_bps
+                       << " target_encode_rate_bps: "    << rl_bwe_params_.target_encode_rate_bps
+                       << " sent_video_rate_bps: "       << rl_bwe_params_.sent_video_rate_bps;
     }
 
     if (allocated_bitrate == 0 && config.allocated_bitrate_bps > 0) {

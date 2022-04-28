@@ -360,7 +360,8 @@ RtpVideoSender::RtpVideoSender(
       transport_overhead_bytes_per_packet_(0),
       encoder_target_rate_bps_(0),
       frame_counts_(rtp_config.ssrcs.size()),
-      frame_count_observer_(observers.frame_count_observer) {
+      frame_count_observer_(observers.frame_count_observer),
+      sent_video_rate_bps_(0) {
   RTC_DCHECK_EQ(rtp_config_.ssrcs.size(), rtp_streams_.size());
   if (send_side_bwe_with_overhead_ && has_packet_feedback_)
     transport_->IncludeOverheadInPacedSender();
@@ -831,6 +832,11 @@ uint32_t RtpVideoSender::GetProtectionBitrateBps() const {
   return protection_bitrate_bps_;
 }
 
+uint32_t RtpVideoSender::GetSentVideoRateBps() const {
+  return sent_video_rate_bps_;
+}
+
+
 std::vector<RtpSequenceNumberMap::Info> RtpVideoSender::GetSentRtpPacketInfos(
     uint32_t ssrc,
     rtc::ArrayView<const uint16_t> sequence_numbers) const {
@@ -860,6 +866,9 @@ int RtpVideoSender::ProtectionRequest(const FecProtectionParams* delta_params,
         stream.rtp_rtcp->GetSendRates()[RtpPacketMediaType::kRetransmission]
             .bps<uint32_t>();
   }
+  sent_video_rate_bps_ = *sent_video_rate_bps;
+  RTC_LOG(LS_INFO) << "sent_video_rate_bps_: " << sent_video_rate_bps_;
+
   return 0;
 }
 

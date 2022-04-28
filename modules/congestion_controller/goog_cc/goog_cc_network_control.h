@@ -46,6 +46,12 @@ struct GoogCcConfig {
   bool feedback_only = false;
 };
 
+struct getRLBweParams {
+  uint32_t sent_video_rate_bps = 0;
+  int target_encode_rate_bps = 0;
+  int reals_encode_bitrate_bps = 0;
+};
+
 class GoogCcNetworkController : public NetworkControllerInterface {
  public:
   GoogCcNetworkController(NetworkControllerConfig config,
@@ -72,7 +78,7 @@ class GoogCcNetworkController : public NetworkControllerInterface {
 
   NetworkControlUpdate GetNetworkState(Timestamp at_time) const;
   int64_t GetLastPacingRate() {return last_pacing_rate_bps_;}
-  int GetLastEncoderRate() {return last_encoder_rate_bps_;}
+  getRLBweParams GetLastEncoderRate() {return last_rl_bwe_params_;}
   int64_t GetFinalEstimationRate() {return last_final_estimation_rate_bps_;}
 
  private:
@@ -150,6 +156,8 @@ class GoogCcNetworkController : public NetworkControllerInterface {
   int last_encoder_rate_bps_;
   int64_t last_pacing_rate_bps_;
   int64_t last_final_estimation_rate_bps_;
+
+  getRLBweParams last_rl_bwe_params_;
 };
 
 }  // namespace webrtc

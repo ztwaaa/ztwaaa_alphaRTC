@@ -205,7 +205,7 @@ RLBasedBwe::DataPacket::DataPacket( int64_t get_rl_input_time_ms, float rtt, flo
                                     uint8_t loss_rate, int64_t recv_throughput_bps,
                                     float retrans_num, int64_t last_final_estimation_rate_bps,
                                     float inter_packet_delay,
-                                    int last_encoded_rate, int64_t last_pacing_rate_bps)
+                                    int last_encoded_rate, uint32_t last_pacing_rate_bps)
     :   
         get_rl_input_time_ms_(get_rl_input_time_ms),
         rtt_ms_(rtt),

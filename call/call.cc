@@ -1122,7 +1122,9 @@ void Call::OnTargetTransferRate(TargetTransferRate msg) {
 }
 
 void Call::OnRlBweUpdateRate(RlBweConfig& msg){
-  msg.video_stats = bitrate_allocator_->GetRlBwe();
+  msg.reals_encode_bitrate_bps = bitrate_allocator_->GetRlBwe().reals_encode_bitrate_bps;
+  msg.sent_video_rate_bps = bitrate_allocator_->GetRlBwe().sent_video_rate_bps;
+  msg.target_encode_rate_bps = bitrate_allocator_->GetRlBwe().target_encode_rate_bps;
   return;
 }
 

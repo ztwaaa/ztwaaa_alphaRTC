@@ -535,8 +535,10 @@ uint32_t AudioSendStream::OnBitrateUpdated(BitrateAllocationUpdate update) {
   return 0;
 }
 
-int AudioSendStream::OnEncodedBitrateUpdated(BitrateAllocationUpdate update) {
-  return -1;
+RLBweParams AudioSendStream::OnEncodedBitrateUpdated(BitrateAllocationUpdate update) {
+  RLBweParams rl_bwe_params;
+  rl_bwe_params.is_video_send = 0;
+  return rl_bwe_params;
 }
 
 void AudioSendStream::SetTransportOverhead(

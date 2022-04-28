@@ -61,8 +61,9 @@ struct RlBweConfig {
   ~RlBweConfig();
   
   Timestamp at_time = Timestamp::PlusInfinity();
-
-  int video_stats = 0;
+  uint32_t sent_video_rate_bps = 0;
+  int target_encode_rate_bps = 0;
+  int reals_encode_bitrate_bps = 0;
 };
 
 struct TargetRateConstraints {

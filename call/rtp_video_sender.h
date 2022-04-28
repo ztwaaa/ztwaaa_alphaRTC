@@ -147,6 +147,7 @@ class RtpVideoSender : public RtpVideoSenderInterface,
       RTC_LOCKS_EXCLUDED(crit_) override;
   uint32_t GetPayloadBitrateBps() const RTC_LOCKS_EXCLUDED(crit_) override;
   uint32_t GetProtectionBitrateBps() const RTC_LOCKS_EXCLUDED(crit_) override;
+  uint32_t GetSentVideoRateBps() const RTC_LOCKS_EXCLUDED(crit_) override;
   void SetEncodingData(size_t width, size_t height, size_t num_temporal_layers)
       RTC_LOCKS_EXCLUDED(crit_) override;
 
@@ -218,6 +219,8 @@ class RtpVideoSender : public RtpVideoSenderInterface,
   std::map<uint32_t, RtpRtcp*> ssrc_to_rtp_module_;
 
   RTC_DISALLOW_COPY_AND_ASSIGN(RtpVideoSender);
+
+  uint32_t sent_video_rate_bps_;
 };
 
 }  // namespace webrtc

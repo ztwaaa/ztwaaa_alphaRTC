@@ -112,7 +112,7 @@ class VideoSendStreamImpl : public webrtc::BitrateAllocatorObserver,
  private:
   // Implements BitrateAllocatorObserver.
   uint32_t OnBitrateUpdated(BitrateAllocationUpdate update) override;
-  int OnEncodedBitrateUpdated(BitrateAllocationUpdate update) override;
+  RLBweParams OnEncodedBitrateUpdated(BitrateAllocationUpdate update) override;
 
   void OnEncoderConfigurationChanged(
       std::vector<VideoStream> streams,
@@ -198,6 +198,8 @@ class VideoSendStreamImpl : public webrtc::BitrateAllocatorObserver,
   };
   absl::optional<VbaSendContext> video_bitrate_allocation_context_
       RTC_GUARDED_BY(worker_queue_);
+
+    uint32_t sent_video_rate_bps_;
 };
 }  // namespace internal
 }  // namespace webrtc

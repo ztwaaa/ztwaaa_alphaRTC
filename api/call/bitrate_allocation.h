@@ -40,6 +40,13 @@ struct BitrateAllocationUpdate {
   double cwnd_reduce_ratio = 0;
 };
 
+struct RLBweParams {
+  uint32_t sent_video_rate_bps = 0;
+  int target_encode_rate_bps = 0;
+  int reals_encode_bitrate_bps = 0;
+  bool is_video_send = 1;
+};
+
 }  // namespace webrtc
 
 #endif  // API_CALL_BITRATE_ALLOCATION_H_
