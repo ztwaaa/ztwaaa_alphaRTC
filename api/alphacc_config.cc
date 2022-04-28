@@ -127,7 +127,9 @@ bool ParseAlphaCCConfig(const std::string& file_path) {
           AlphaCCConfig::AudioSourceOption::kAudioFile;
       RETURN_ON_FAIL(GetString(third, "file_path", &config->audio_file_path));
     } else {
-      return false;
+      config->audio_source_option =
+          AlphaCCConfig::AudioSourceOption::null_audio;
+      // return false;
     }
   }
 

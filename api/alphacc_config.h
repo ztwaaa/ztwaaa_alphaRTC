@@ -59,7 +59,7 @@ struct AlphaCCConfig {
   int video_fps = 0;
   std::string video_file_path;
 
-  enum class AudioSourceOption { kMicrophone, kAudioFile } audio_source_option;
+  enum class AudioSourceOption { kMicrophone, kAudioFile, null_audio } audio_source_option;
   std::string audio_file_path;
 
   bool save_to_file = false;

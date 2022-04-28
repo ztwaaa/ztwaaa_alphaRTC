@@ -238,6 +238,9 @@ bool Conductor::InitializePeerConnection() {
   } else if (alphacc_config_->audio_source_option ==
              AudioSourceOption::kMicrophone) {
     audio_device_module = nullptr;
+  } else if (alphacc_config_->audio_source_option ==
+             AudioSourceOption::null_audio) {
+    audio_device_module = nullptr;
   }
 
   peer_connection_factory_ = webrtc::CreatePeerConnectionFactory(
