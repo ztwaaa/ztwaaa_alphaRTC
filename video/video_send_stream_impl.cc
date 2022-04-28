@@ -623,6 +623,7 @@ uint32_t VideoSendStreamImpl::OnBitrateUpdated(BitrateAllocationUpdate update) {
 
   rtp_video_sender_->OnBitrateUpdated(update, stats_proxy_->GetSendFrameRate());
   encoder_target_rate_bps_ = rtp_video_sender_->GetPayloadBitrateBps();
+  RTC_LOG(LS_INFO) << "GetPayloadBitrateBps: "<< encoder_target_rate_bps_;
   const uint32_t protection_bitrate_bps =
       rtp_video_sender_->GetProtectionBitrateBps();
   DataRate link_allocation = DataRate::Zero();
@@ -632,6 +633,8 @@ uint32_t VideoSendStreamImpl::OnBitrateUpdated(BitrateAllocationUpdate update) {
   }
   DataRate overhead =
       update.target_bitrate - DataRate::BitsPerSec(encoder_target_rate_bps_);
+  RTC_LOG(LS_INFO) << "overhead: "<< overhead.bps();
+
   DataRate encoder_stable_target_rate = update.stable_target_bitrate;
   if (encoder_stable_target_rate > overhead) {
     encoder_stable_target_rate = encoder_stable_target_rate - overhead;
@@ -641,6 +644,8 @@ uint32_t VideoSendStreamImpl::OnBitrateUpdated(BitrateAllocationUpdate update) {
 
   encoder_target_rate_bps_ =
       std::min(encoder_max_bitrate_bps_, encoder_target_rate_bps_);
+  RTC_LOG(LS_INFO) << "encoder_target_rate_bps_: "<< encoder_target_rate_bps_
+                    << " encoder_max_bitrate_bps_: " << encoder_max_bitrate_bps_;
 
   encoder_stable_target_rate =
       std::min(DataRate::BitsPerSec(encoder_max_bitrate_bps_),
@@ -653,6 +658,7 @@ uint32_t VideoSendStreamImpl::OnBitrateUpdated(BitrateAllocationUpdate update) {
       rtc::dchecked_cast<uint8_t>(update.packet_loss_ratio * 256),
       update.round_trip_time.ms(), update.cwnd_reduce_ratio);
   stats_proxy_->OnSetEncoderTargetRate(encoder_target_rate_bps_);
+  RTC_LOG(LS_INFO) << "protection_bitrate_bps: "<< protection_bitrate_bps;
   return protection_bitrate_bps;
 }
 

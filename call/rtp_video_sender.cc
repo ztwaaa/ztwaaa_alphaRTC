@@ -815,6 +815,12 @@ void RtpVideoSender::OnBitrateUpdated(BitrateAllocationUpdate update,
                               packetization_rate_bps;
   RTC_DCHECK_GE(update.target_bitrate, DataRate::BitsPerSec(media_rate));
   protection_bitrate_bps_ = update.target_bitrate.bps() - media_rate;
+
+  RTC_LOG(LS_INFO)  << " media_rate: "<< media_rate 
+                    << " encoder_target_rate_bps_: "<< encoder_target_rate_bps_
+                    << " encoder_overhead_rate_bps: "<< encoder_overhead_rate_bps
+                    << " packetization_rate_bps: "<< packetization_rate_bps
+                    << " protection_bitrate_bps: "<< protection_bitrate_bps_;
 }
 
 uint32_t RtpVideoSender::GetPayloadBitrateBps() const {

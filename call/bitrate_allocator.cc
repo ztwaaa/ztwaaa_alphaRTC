@@ -400,8 +400,15 @@ void BitrateAllocator::OnNetworkEstimateChanged(TargetTransferRate msg) {
   auto stable_bitrate_allocation =
       AllocateBitrates(allocatable_tracks_, last_stable_target_bps_);
 
+  int count_config = 0;
+  int count_observer = 0;
+  int track_encoder_rate = 0;
+
   for (auto& config : allocatable_tracks_) {
     uint32_t allocated_bitrate = allocation[config.observer];
+    count_config++;
+    RTC_LOG(LS_INFO) << "count_config: "<< count_config << ", allocated_bitrate: "<<  allocated_bitrate;
+
     uint32_t allocated_stable_target_rate =
         stable_bitrate_allocation[config.observer];
     BitrateAllocationUpdate update;
@@ -414,10 +421,13 @@ void BitrateAllocator::OnNetworkEstimateChanged(TargetTransferRate msg) {
     update.cwnd_reduce_ratio = msg.cwnd_reduce_ratio;
     uint32_t protection_bitrate = config.observer->OnBitrateUpdated(update);
 
-    if(config.observer->OnEncodedBitrateUpdated(update) > 0){
-      video_send_statitics_ = config.observer->OnEncodedBitrateUpdated(update);
+    track_encoder_rate = config.observer->OnEncodedBitrateUpdated(update);
+    
+    if(track_encoder_rate > 0){
+      video_send_statitics_ = track_encoder_rate;
+      count_observer++;
+      RTC_LOG(LS_INFO) << "count_observer: "<< count_observer << ", total video_send_statitics_:" << video_send_statitics_; 
     }
-    RTC_LOG(LS_INFO) << "OnEncodedBitrateUpdated video_send_statitics_:" << video_send_statitics_;
 
     if (allocated_bitrate == 0 && config.allocated_bitrate_bps > 0) {
       if (last_target_bps_ > 0)
@@ -531,9 +541,7 @@ void BitrateAllocator::UpdateAllocationLimits() {
                    << ", total_requested_padding_bitrate: "
                    << ToString(limits.max_padding_rate)
                    << ", total_requested_max_bitrate: "
-                   << ToString(limits.max_allocatable_rate)
-                   << ", video actual encoded bitrate: ";
-
+                   << ToString(limits.max_allocatable_rate);
   limit_observer_->OnAllocationLimitsChanged(limits);
 }
 

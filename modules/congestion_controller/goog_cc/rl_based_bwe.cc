@@ -87,9 +87,8 @@ std::string RLBasedBwe::Convert2Json(RLBasedBwe::DataPacket data_packet_){
     std::unique_ptr<Json::StreamWriter> jsonWriter(writerBuilder.newStreamWriter());
     jsonWriter->write(input_to_send, &os);
     std::string jsonStr = os.str();
-    std::cout << "Json to send:\n" << jsonStr << std::endl;
     jsonStr = jsonStr + "aaa";
-    std::cout << "Json to send:\n" << jsonStr << std::endl;
+    RTC_LOG(LS_INFO)  << "Json to send:\n" << jsonStr ;
     return jsonStr;
 }
 
