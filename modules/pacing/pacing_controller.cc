@@ -524,20 +524,21 @@ void PacingController::ProcessPackets() {
 
     if (rtp_packet == nullptr) {
       // No packet available to send, check if we should send padding.
-      DataSize padding_to_add = PaddingToAdd(recommended_probe_size, data_sent);
-      if (padding_to_add > DataSize::Zero()) {
-        std::vector<std::unique_ptr<RtpPacketToSend>> padding_packets =
-            packet_sender_->GeneratePadding(padding_to_add);
-        if (padding_packets.empty()) {
-          // No padding packets were generated, quite send loop.
-          break;
-        }
-        for (auto& packet : padding_packets) {
-          EnqueuePacket(std::move(packet));
-        }
-        // Continue loop to send the padding that was just added.
-        continue;
-      }
+      // 关闭padding
+      // DataSize padding_to_add = PaddingToAdd(recommended_probe_size, data_sent);
+      // if (padding_to_add > DataSize::Zero()) {
+      //   std::vector<std::unique_ptr<RtpPacketToSend>> padding_packets =
+      //       packet_sender_->GeneratePadding(padding_to_add);
+      //   if (padding_packets.empty()) {
+      //     // No padding packets were generated, quite send loop.
+      //     break;
+      //   }
+      //   for (auto& packet : padding_packets) {
+      //     EnqueuePacket(std::move(packet));
+      //   }
+      //   // Continue loop to send the padding that was just added.
+      //   continue;
+      // }
 
       // Can't fetch new packet and no padding to send, exit send loop.
       break;
