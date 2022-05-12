@@ -787,6 +787,16 @@ PacerConfig GoogCcNetworkController::GetPacingRates(Timestamp at_time) const {
   DataRate pacing_rate =
       std::max(min_total_allocated_bitrate_, last_loss_based_target_rate_) *
       pacing_factor_;
+  RTC_LOG(LS_INFO) << "original pacing_bitrate: " << pacing_rate.bps();
+
+  // 接受ai infer调节
+  if(!rl_based_bwe_->rl_result.use_gcc_result_){
+    pacing_rate = rl_based_bwe_->rl_result.target_pacing_bitrate_;
+    RTC_LOG(LS_INFO) << "ai infer pacing_bitrate: " << pacing_rate.bps();
+  }
+
+  RTC_LOG(LS_INFO) << "final pacing_bitrate: " << pacing_rate.bps();
+
   DataRate padding_rate =
       std::min(max_padding_rate_, last_pushback_target_rate_);
 

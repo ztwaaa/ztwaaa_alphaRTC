@@ -176,11 +176,15 @@ void RLBasedBwe::RecvFromRL(SOCKET RL_socket){
         if(!recv_2_json_["send_rate"].isNull()){
             rl_result.target_bitrate_ = webrtc::DataRate::BytesPerSec(recv_2_json_["send_rate"].asFloat());
         }
+        if(!recv_2_json_["target_pacing_bitrate"].isNull()){
+            rl_result.target_pacing_bitrate_ = webrtc::DataRate::BytesPerSec(recv_2_json_["target_pacing_bitrate"].asFloat());
+        }
         if(!recv_2_json_["fd_id"].isNull()){
             fd_id = recv_2_json_["fd_id"].asInt();
         }
 
-        RTC_LOG(LS_INFO)    << "ai estimated result(Bps):" << recv_2_json_["send_rate"] 
+        RTC_LOG(LS_INFO)    << "ai estimated result(Bps):" << recv_2_json_["send_rate"]
+                            << "target_pacing_bitrate(Bps): " << recv_2_json_["target_pacing_bitrate"] 
                             << " use_gcc: " << recv_2_json_["use_gcc_result"]
                             << " fd_id: " << fd_id;
         RTC_LOG(LS_INFO) << "ai estimated result(bps):" << rl_result.target_bitrate_.bps() << "  use_gcc: " << rl_result.use_gcc_result_;
@@ -220,11 +224,13 @@ RLBasedBwe::DataPacket::DataPacket( int64_t get_rl_input_time_ms, float rtt, flo
 
 RLBasedBwe::Result::Result()
     :   use_gcc_result_(true),
-        target_bitrate_(DataRate::Zero()) {}
+        target_bitrate_(DataRate::Zero()),
+        target_pacing_bitrate_(DataRate::Zero()) {}
 
-RLBasedBwe::Result::Result(bool use_gcc_result, DataRate target_bitrate)
+RLBasedBwe::Result::Result(bool use_gcc_result, DataRate target_bitrate, DataRate target_pacing_bitrate)
     :   use_gcc_result_(use_gcc_result),
-        target_bitrate_(target_bitrate) {}
+        target_bitrate_(target_bitrate),
+        target_pacing_bitrate_(target_pacing_bitrate) {}
 
 DataRate RLBasedBwe::getResult(SOCKET RL_socket, float target_rate_float){
     
@@ -237,7 +243,7 @@ RLBasedBwe::Result RLBasedBwe::FromRLModule(SOCKET RL_socket){
         return Result();
     }
     RecvFromRL(RL_socket);
-    return rl_result.use_gcc_result_ ? Result() : Result(rl_result.use_gcc_result_, rl_result.target_bitrate_);
+    return rl_result.use_gcc_result_ ? Result() : Result(rl_result.use_gcc_result_, rl_result.target_bitrate_, rl_result.target_pacing_bitrate_);
 }
 
 char* RLBasedBwe::DataConvert(RLBasedBwe::DataPacket &data_packet_, char* converted_data_){

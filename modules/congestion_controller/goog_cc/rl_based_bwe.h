@@ -40,24 +40,14 @@ public:
         int last_encoded_rate_bps_;
         uint32_t last_pacing_rate_bps_;
     };
-    // 仿照delay_based_bwe构造rl_result
-    // struct Result {
-    //     Result();
-    //     Result(bool probe, webrtc::DataRate target_bitrate);
-    //     ~Result() = default;
-    //     bool updated;
-    //     bool probe;
-    //     webrtc::DataRate target_bitrate;
-    //     bool recovered_from_overuse;
-    //     bool backoff_in_alr;
-    // };
 
     struct Result {
         Result();
-        Result(bool use_gcc_result, webrtc::DataRate target_bitrate);
+        Result(bool use_gcc_result, webrtc::DataRate target_bitrate, webrtc::DataRate target_pacing_bitrate_);
         ~Result() = default;
         bool use_gcc_result_;
         webrtc::DataRate target_bitrate_;
+        webrtc::DataRate target_pacing_bitrate_;
     };
 
     bool to_recv_ai_fb_;
