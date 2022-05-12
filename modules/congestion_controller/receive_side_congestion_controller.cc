@@ -146,7 +146,7 @@ ReceiveSideCongestionController::ReceiveSideCongestionController(
                       &field_trial_config_,
                       network_state_estimator)
                       {
-                        if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(),"gcc") == 0){
+                        if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(),"alphacc") != 0){
                           remote_estimator_proxy_ = &gcc_remote_estimator_proxy_;
                         }
                         else{

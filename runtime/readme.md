@@ -55,9 +55,9 @@ python baseline-ppo/baseline/PPO/main.py '192.168.0.189' 4321
 * [config files参数说明](https://github.com/OpenNetLab/AlphaRTC#configurations-for-peerconnection_serverless)
 
     - 修改：
-    1. 选择控制算法（TODO），`default`：AlphaCC，`gcc`: GCC
+    1. 选择控制算法，`alphacc`：AlphaCC，`gcc`: 纯GCC, `rlcc`: GCC+RL(开启socket传输)
     ```
-    "bwe_algo": "default/gcc"
+    "bwe_algo": "alphacc" or "gcc" or "rlcc"
     ```
     2. 设置socket服务器ip和端口：
     ```

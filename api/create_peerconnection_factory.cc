@@ -49,7 +49,7 @@ rtc::scoped_refptr<PeerConnectionFactoryInterface> CreatePeerConnectionFactory(
       dependencies.task_queue_factory.get());
 
   // add inject GCC
-  if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(), "gcc") == 0){
+  if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(), "alphacc") != 0){
     dependencies.network_controller_factory = 
     std::make_unique<GoogCcNetworkControllerFactory>(dependencies.network_state_predictor_factory.get());
   }

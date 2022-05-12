@@ -138,12 +138,6 @@ int main(int argc, char* argv[]) {
   std::cout<<config->onnx_model_path.c_str()<<std::endl;
   std::cout<<argc<<std::endl;
   
-  if(config->onnx_model_path.empty()){
-    int port = config->socket_server_port;
-    std::unique_ptr<webrtc::RLBasedBwe> rl_based_bwe_ = std::make_unique<webrtc::RLBasedBwe>();
-    rl_based_bwe_->RLSocketInit(RL_Socket, config->socket_server_ip, port);
-  }
-
   if (config->save_log_to_file) {
     sink = std::make_unique<FileLogSink>(config->log_output_path);
   }
@@ -153,9 +147,16 @@ int main(int argc, char* argv[]) {
                                                     //  hasAbsSendTimestamp in
                                                     //  RTP Header extension
 
-  if (strcmp(config->bwe_algo.c_str(), "default") != 0){
+  if (strcmp(config->bwe_algo.c_str(), "alphacc") != 0){
     webrtc::field_trial::InitFieldTrialsFromString(
       "WebRTC-Bwe-InjectedCongestionController/Enabled/");
+  }
+
+  // 如果用rlcc才开启socket传输
+  if (strcmp(config->bwe_algo.c_str(), "rlcc") == 0){
+    int port = config->socket_server_port;
+    std::unique_ptr<webrtc::RLBasedBwe> rl_based_bwe_ = std::make_unique<webrtc::RLBasedBwe>();
+    rl_based_bwe_->RLSocketInit(RL_Socket, config->socket_server_ip, port);
   }
 
 #ifdef WIN32

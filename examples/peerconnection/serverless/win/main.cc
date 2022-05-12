@@ -58,12 +58,13 @@ int PASCAL wWinMain(HINSTANCE instance,
   };
 
   auto config = webrtc::GetAlphaCCConfig();
-  if (strcmp(config->bwe_algo.c_str(), "default") != 0){
+  if (strcmp(config->bwe_algo.c_str(), "alphacc") != 0){
     webrtc::field_trial::InitFieldTrialsFromString(
       "WebRTC-Bwe-InjectedCongestionController/Enabled/");
   }                                         
 
-  if(config->onnx_model_path.empty()){
+  // 如果用rlcc才开启socket传输
+  if (strcmp(config->bwe_algo.c_str(), "rlcc") == 0){
     int port = config->socket_server_port;
     std::unique_ptr<webrtc::RLBasedBwe> rl_based_bwe_ = std::make_unique<webrtc::RLBasedBwe>();
     rl_based_bwe_->RLSocketInit(RL_Socket, config->socket_server_ip, port);

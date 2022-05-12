@@ -23,6 +23,7 @@
 
 #include "absl/strings/match.h"
 #include "api/units/time_delta.h"
+#include "api/alphacc_config.h"
 #include "logging/rtc_event_log/events/rtc_event_remote_estimate.h"
 #include "modules/congestion_controller/goog_cc/alr_detector.h"
 #include "modules/congestion_controller/goog_cc/probe_controller.h"
@@ -570,43 +571,37 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
   bool backoff_in_alr = false;
 
   DelayBasedBwe::Result result;
-  // 基于延时的码率估计
-  result = delay_based_bwe_->IncomingPacketFeedbackVector(
-      report, acknowledged_bitrate, probe_bitrate, estimate_,
-      alr_start_time.has_value());
-  
-  // RTC_LOG(LS_INFO) << "before rl_packet_";
-  // uint32_t send_time_24bits =
-  //     static_cast<uint32_t>(
-  //         ((static_cast<uint64_t>(report.feedback_time.ms())
-  //           << 18) +
-  //          500) /
-  //         1000) &
-  //     0x00FFFFFF;
-  // Shift up send time to use the full 32 bits that inter_arrival works with,
-  // so wrapping works properly.
-  rl_based_bwe_->rl_packet_.get_rl_input_time_ms_ = report.feedback_time.ms();
-  rl_based_bwe_->rl_packet_.rtt_ms_ = bandwidth_estimation_->round_trip_time().ms();
-  rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_ = GetFinalEstimationRate();
-  rl_based_bwe_->rl_packet_.loss_rate_ = bandwidth_estimation_->fraction_loss();
-  if(acknowledged_bitrate.has_value()){
-    rl_based_bwe_->rl_packet_.recv_throughput_bps_ = acknowledged_bitrate.value().bps();
+    // 基于延时的码率估计
+    result = delay_based_bwe_->IncomingPacketFeedbackVector(
+        report, acknowledged_bitrate, probe_bitrate, estimate_,
+        alr_start_time.has_value());
+
+  // 如果使用rl_cc才收集数据并用socket发送数据
+  if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(), "rlcc") == 0){
+
+    rl_based_bwe_->rl_packet_.get_rl_input_time_ms_ = report.feedback_time.ms();
+    rl_based_bwe_->rl_packet_.rtt_ms_ = bandwidth_estimation_->round_trip_time().ms();
+    rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_ = GetFinalEstimationRate();
+    rl_based_bwe_->rl_packet_.loss_rate_ = bandwidth_estimation_->fraction_loss();
+    if(acknowledged_bitrate.has_value()){
+      rl_based_bwe_->rl_packet_.recv_throughput_bps_ = acknowledged_bitrate.value().bps();
+    }
+    rl_based_bwe_->rl_packet_.inter_packet_delay_ms_ = delay_based_bwe_->get_recv_delta_ms()-delay_based_bwe_->get_send_delta_ms();
+    rl_based_bwe_->rl_packet_.last_encoded_rate_bps_ = GetLastEncoderRate().reals_encode_bitrate_bps;
+    rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastEncoderRate().sent_video_rate_bps;
+    // rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastPacingRate();
+
+    RTC_LOG(LS_INFO)  << " get_rl_input_time_ms_: "            << rl_based_bwe_->rl_packet_.get_rl_input_time_ms_
+                      << " rtt_ms_: "                          << rl_based_bwe_->rl_packet_.rtt_ms_
+                      << " last_final_estimation_rate_bps_: "  << rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_
+                      << " loss_rate_: "                       << rl_based_bwe_->rl_packet_.loss_rate_
+                      << " recv_throughput_bps_: "             << rl_based_bwe_->rl_packet_.recv_throughput_bps_
+                      << " inter_packet_delay_ms_: "           << rl_based_bwe_->rl_packet_.inter_packet_delay_ms_
+                      << " last_encoded_rate_bps_: "           << rl_based_bwe_->rl_packet_.last_encoded_rate_bps_
+                      << " last_pacing_rate_bps_: "            << rl_based_bwe_->rl_packet_.last_pacing_rate_bps_;
+
+    rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
   }
-  rl_based_bwe_->rl_packet_.inter_packet_delay_ms_ = delay_based_bwe_->get_recv_delta_ms()-delay_based_bwe_->get_send_delta_ms();
-  rl_based_bwe_->rl_packet_.last_encoded_rate_bps_ = GetLastEncoderRate().reals_encode_bitrate_bps;
-  rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastEncoderRate().sent_video_rate_bps;
-  // rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastPacingRate();
-
-  RTC_LOG(LS_INFO)  << " get_rl_input_time_ms_: "            << rl_based_bwe_->rl_packet_.get_rl_input_time_ms_
-                    << " rtt_ms_: "                          << rl_based_bwe_->rl_packet_.rtt_ms_
-                    << " last_final_estimation_rate_bps_: "  << rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_
-                    << " loss_rate_: "                       << rl_based_bwe_->rl_packet_.loss_rate_
-                    << " recv_throughput_bps_: "             << rl_based_bwe_->rl_packet_.recv_throughput_bps_
-                    << " inter_packet_delay_ms_: "           << rl_based_bwe_->rl_packet_.inter_packet_delay_ms_
-                    << " last_encoded_rate_bps_: "           << rl_based_bwe_->rl_packet_.last_encoded_rate_bps_
-                    << " last_pacing_rate_bps_: "            << rl_based_bwe_->rl_packet_.last_pacing_rate_bps_;
-
-  rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
   
   if (result.updated) {
     if (result.probe) {
@@ -686,23 +681,27 @@ void GoogCcNetworkController::MaybeTriggerOnNetworkChanged(
   uint8_t fraction_loss = bandwidth_estimation_->fraction_loss();
   TimeDelta round_trip_time = bandwidth_estimation_->round_trip_time();
   
-  // 如果是OnTransportPacketsFeedback调用MaybeTriggerOnNetworkChanged才执行socket recv.
-  if(rl_based_bwe_->to_recv_ai_fb_){
-    // 接收AiInfer结果
-    rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);
-    // 不论接收成功还是失败，都关闭to_recv_ai_fb_，在下一次OnTransportPacketsFeedback时由SendToRL进行新的决策
-    rl_based_bwe_->to_recv_ai_fb_ = false;
-  }
-  
-  RTC_LOG(LS_INFO) << "use_gcc_result_: " << rl_based_bwe_->rl_result.use_gcc_result_;
-  // 使用GCC算法结果
+  // 默认使用GCC算法结果
   DataRate loss_based_target_rate = bandwidth_estimation_->target_rate();
   RTC_LOG(LS_INFO) << "GCC result: " << loss_based_target_rate.bps();
-  // 接受ai infer调节，不使用GCC算法。
-  if(!rl_based_bwe_->rl_result.use_gcc_result_){
-    loss_based_target_rate = rl_based_bwe_->rl_result.target_bitrate_;
-    RTC_LOG(LS_INFO) << "ai infer result: " << loss_based_target_rate.bps();
+
+  // 如果启用rlcc，开启socket相关功能
+  if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(), "rlcc") == 0) {
+    // 如果是OnTransportPacketsFeedback调用MaybeTriggerOnNetworkChanged才执行socket recv.
+    if(rl_based_bwe_->to_recv_ai_fb_){
+      // 接收AiInfer结果
+      rl_based_bwe_->rl_result = rl_based_bwe_->FromRLModule(RL_Socket);
+      // 不论接收成功还是失败，都关闭to_recv_ai_fb_，在下一次OnTransportPacketsFeedback时由SendToRL进行新的决策
+      rl_based_bwe_->to_recv_ai_fb_ = false;
+    }
+    RTC_LOG(LS_INFO) << "use_gcc_result_: " << rl_based_bwe_->rl_result.use_gcc_result_;
+    // 接受ai infer调节，不使用GCC算法。
+    if(!rl_based_bwe_->rl_result.use_gcc_result_){
+      loss_based_target_rate = rl_based_bwe_->rl_result.target_bitrate_;
+      RTC_LOG(LS_INFO) << "ai infer result: " << loss_based_target_rate.bps();
+    }
   }
+
   // 记录本轮最终码率上报结果，用于下一轮发送
   last_final_estimation_rate_bps_ = loss_based_target_rate.bps();
   RTC_LOG(LS_INFO) << "Final result: " << last_final_estimation_rate_bps_;
@@ -790,9 +789,11 @@ PacerConfig GoogCcNetworkController::GetPacingRates(Timestamp at_time) const {
   RTC_LOG(LS_INFO) << "original pacing_bitrate: " << pacing_rate.bps();
 
   // 接受ai infer调节
-  if(!rl_based_bwe_->rl_result.use_gcc_result_){
+  if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(), "rlcc") == 0){
+    if(!rl_based_bwe_->rl_result.use_gcc_result_){
     pacing_rate = rl_based_bwe_->rl_result.target_pacing_bitrate_;
     RTC_LOG(LS_INFO) << "ai infer pacing_bitrate: " << pacing_rate.bps();
+    }
   }
 
   RTC_LOG(LS_INFO) << "final pacing_bitrate: " << pacing_rate.bps();
