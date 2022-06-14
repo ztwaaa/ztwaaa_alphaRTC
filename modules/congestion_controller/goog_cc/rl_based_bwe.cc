@@ -8,13 +8,9 @@
 
 #include <iostream>
 #include<cstring>
-#ifdef _WIN32
 #include<windows.h>
 #include<winsock2.h>
 #pragma comment(lib,"ws2_32.lib")
-#else
-#include<linux/socket.h>
-#endif
 /*RL socket*/
 SOCKET RL_Socket = -1;
 
@@ -29,8 +25,8 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket, std::string ip, int port){
     struct sockaddr_in server_in; 
     WORD socket_version;
     WSADATA wsadata; 
-    int ret;
-    unsigned long ul=1;
+    // int ret;
+    // unsigned long ul=1;
     socket_version = MAKEWORD(2,2);
     if(WSAStartup(socket_version, &wsadata) != 0)
     {
@@ -48,12 +44,17 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket, std::string ip, int port){
         system("pause");
         return 1;
     }
-    ret = ioctlsocket(RL_socket,FIONBIO,(unsigned long *)&ul);
-    if(ret == SOCKET_ERROR){
-        //printf("setting error!!");
-        RTC_LOG(LS_INFO) << "sock test! socket setting error!!";
-        exit(1);
-    }
+    // socket timeout时间设置
+    int recvTimeout=40;
+    int sendTimeout=10;
+    setsockopt(RL_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&recvTimeout, sizeof(int));
+    setsockopt(RL_socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&sendTimeout, sizeof(int));
+    // ret = ioctlsocket(RL_socket, FIONBIO, (unsigned long *)&ul);
+    // if(ret == SOCKET_ERROR){
+    //     //printf("setting error!!");
+    //     RTC_LOG(LS_INFO) << "sock test! socket setting error!!";
+    //     exit(1);
+    // }
     server_in.sin_family = AF_INET;    //IPV4协议族
     server_in.sin_port = htons(port);  //服务器的端口号
     server_in.sin_addr.S_un.S_addr = inet_addr(ip.c_str()); //服务IP
@@ -152,17 +153,17 @@ void RLBasedBwe::RecvFromRL(SOCKET RL_socket){
         else if(err == WSAETIMEDOUT){
             //printf("Timeout!!");
             RTC_LOG(LS_INFO) << "sock test! socket Timeout!! ERROR: " << err;
-            exit(1);
+            return;
         }
         else if(err == WSAENETDOWN){
             //printf("Connection lost!!");
             RTC_LOG(LS_INFO) << "sock test! socket Connection lost!! ERROR: " << err;
-            exit(1);
+            return;
         }
         else{
             //printf("Something error!!");
             RTC_LOG(LS_INFO) << "sock test! socket Something error!! ERROR: " << err;
-            exit(1);
+            return;
         }
     }
     else{
