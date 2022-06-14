@@ -60,9 +60,10 @@ int RLBasedBwe::RLSocketInit(SOCKET& RL_socket, std::string ip, int port){
     while(connect(RL_socket, (struct sockaddr *)&server_in, sizeof(server_in)) == SOCKET_ERROR)
     {
         int err=WSAGetLastError();
-        // RTC_LOG(LS_INFO) << "sock test! socket-err-code: " << err;
-        if(err == 10056)
+        if(err == 10056){
+            RTC_LOG(LS_INFO) << "sock test! ERROR, err: " << err;
             break;
+        }
     }
 
     RTC_LOG(LS_INFO) << "sock test! socket connect "<< inet_ntoa(server_in.sin_addr) <<":"<< server_in.sin_port;
@@ -79,6 +80,7 @@ std::string RLBasedBwe::Convert2Json(RLBasedBwe::DataPacket data_packet_){
     input_to_send["rtt_ms"] = Json::Value(data_packet_.rtt_ms_);
     input_to_send["last_final_estimation_rate_bps"] = Json::Value(data_packet_.last_final_estimation_rate_bps_);
     input_to_send["loss_rate"] = Json::Value(data_packet_.loss_rate_);
+    input_to_send["gcc_bps"] = Json::Value(data_packet_.gcc_bps_);
     input_to_send["recv_throughput_bps"] = Json::Value(data_packet_.recv_throughput_bps_);
     input_to_send["inter_packet_delay_ms"] = Json::Value(data_packet_.inter_packet_delay_ms_);
     input_to_send["last_encoded_rate_bps"] = Json::Value(data_packet_.last_encoded_rate_bps_);
@@ -184,7 +186,7 @@ void RLBasedBwe::RecvFromRL(SOCKET RL_socket){
         }
 
         RTC_LOG(LS_INFO)    << "ai estimated result(Bps):" << recv_2_json_["send_rate"]
-                            << "target_pacing_bitrate(Bps): " << recv_2_json_["target_pacing_bitrate"] 
+                            << " target_pacing_bitrate(Bps): " << recv_2_json_["target_pacing_bitrate"] 
                             << " use_gcc: " << recv_2_json_["use_gcc_result"]
                             << " fd_id: " << fd_id;
         RTC_LOG(LS_INFO) << "ai estimated result(bps):" << rl_result.target_bitrate_.bps() << "  use_gcc: " << rl_result.use_gcc_result_;
@@ -198,6 +200,7 @@ RLBasedBwe::DataPacket::DataPacket()
         rtt_ms_(0),
         lost_per_sec(0),
         loss_rate_(0),
+        gcc_bps_(0),
         recv_throughput_bps_(0),
         retrans_num(0),
         last_final_estimation_rate_bps_(0),
@@ -206,7 +209,7 @@ RLBasedBwe::DataPacket::DataPacket()
         last_pacing_rate_bps_(0) {}
 
 RLBasedBwe::DataPacket::DataPacket( int64_t get_rl_input_time_ms, float rtt, float lost_per_sec,
-                                    uint8_t loss_rate, int64_t recv_throughput_bps,
+                                    uint8_t loss_rate, int64_t gcc_bps, int64_t recv_throughput_bps,
                                     float retrans_num, int64_t last_final_estimation_rate_bps,
                                     float inter_packet_delay,
                                     int last_encoded_rate, uint32_t last_pacing_rate_bps)
@@ -215,6 +218,7 @@ RLBasedBwe::DataPacket::DataPacket( int64_t get_rl_input_time_ms, float rtt, flo
         rtt_ms_(rtt),
         lost_per_sec(lost_per_sec),
         loss_rate_(loss_rate),
+        gcc_bps_(gcc_bps),
         recv_throughput_bps_(recv_throughput_bps),
         retrans_num(retrans_num),
         last_final_estimation_rate_bps_(last_final_estimation_rate_bps),
@@ -249,10 +253,11 @@ RLBasedBwe::Result RLBasedBwe::FromRLModule(SOCKET RL_socket){
 char* RLBasedBwe::DataConvert(RLBasedBwe::DataPacket &data_packet_, char* converted_data_){
     int data_len = 6 * sizeof(float) + 5;
     if((isNotEmpty(data_packet_))&&(converted_data_!=NULL)){
-        sprintf(converted_data_,"%f_%f_%d_%lld_%f_%lld_%f_%d",
+        sprintf(converted_data_,"%f_%f_%d_%lld_%lld_%f_%lld_%f_%d",
         data_packet_.rtt_ms_,
         data_packet_.lost_per_sec,
         data_packet_.loss_rate_,
+        data_packet_.gcc_bps_,
         data_packet_.recv_throughput_bps_,
         data_packet_.retrans_num,
         data_packet_.last_final_estimation_rate_bps_,
@@ -268,6 +273,7 @@ char* RLBasedBwe::DataConvert(RLBasedBwe::DataPacket &data_packet_, char* conver
 bool RLBasedBwe::isNotEmpty(DataPacket &data_packet_){
     if( data_packet_.loss_rate_ == 0 &&
         data_packet_.lost_per_sec == 0 &&
+        data_packet_.gcc_bps_ == 0 &&
         data_packet_.recv_throughput_bps_ == 0 &&
         data_packet_.retrans_num == 0 &&
         data_packet_.last_final_estimation_rate_bps_ == 0 &&

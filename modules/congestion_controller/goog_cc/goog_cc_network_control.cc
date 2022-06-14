@@ -575,33 +575,6 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
     result = delay_based_bwe_->IncomingPacketFeedbackVector(
         report, acknowledged_bitrate, probe_bitrate, estimate_,
         alr_start_time.has_value());
-
-  // 如果使用rl_cc才收集数据并用socket发送数据
-  if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(), "rlcc") == 0){
-
-    rl_based_bwe_->rl_packet_.get_rl_input_time_ms_ = report.feedback_time.ms();
-    rl_based_bwe_->rl_packet_.rtt_ms_ = bandwidth_estimation_->round_trip_time().ms();
-    rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_ = GetFinalEstimationRate();
-    rl_based_bwe_->rl_packet_.loss_rate_ = bandwidth_estimation_->fraction_loss();
-    if(acknowledged_bitrate.has_value()){
-      rl_based_bwe_->rl_packet_.recv_throughput_bps_ = acknowledged_bitrate.value().bps();
-    }
-    rl_based_bwe_->rl_packet_.inter_packet_delay_ms_ = delay_based_bwe_->get_recv_delta_ms()-delay_based_bwe_->get_send_delta_ms();
-    rl_based_bwe_->rl_packet_.last_encoded_rate_bps_ = GetLastEncoderRate().reals_encode_bitrate_bps;
-    rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastEncoderRate().sent_video_rate_bps;
-    // rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastPacingRate();
-
-    RTC_LOG(LS_INFO)  << " get_rl_input_time_ms_: "            << rl_based_bwe_->rl_packet_.get_rl_input_time_ms_
-                      << " rtt_ms_: "                          << rl_based_bwe_->rl_packet_.rtt_ms_
-                      << " last_final_estimation_rate_bps_: "  << rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_
-                      << " loss_rate_: "                       << rl_based_bwe_->rl_packet_.loss_rate_
-                      << " recv_throughput_bps_: "             << rl_based_bwe_->rl_packet_.recv_throughput_bps_
-                      << " inter_packet_delay_ms_: "           << rl_based_bwe_->rl_packet_.inter_packet_delay_ms_
-                      << " last_encoded_rate_bps_: "           << rl_based_bwe_->rl_packet_.last_encoded_rate_bps_
-                      << " last_pacing_rate_bps_: "            << rl_based_bwe_->rl_packet_.last_pacing_rate_bps_;
-
-    rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
-  }
   
   if (result.updated) {
     if (result.probe) {
@@ -614,6 +587,34 @@ NetworkControlUpdate GoogCcNetworkController::OnTransportPacketsFeedback(
     // 更新bandwidth_estimation_中基于延迟的估计码率
     bandwidth_estimation_->UpdateDelayBasedEstimate(report.feedback_time,
                                                     result.target_bitrate);
+    // 如果使用rl_cc才收集数据并用socket发送数据
+    if(strcmp(GetAlphaCCConfig()->bwe_algo.c_str(), "rlcc") == 0){
+
+      rl_based_bwe_->rl_packet_.get_rl_input_time_ms_ = report.feedback_time.ms();
+      rl_based_bwe_->rl_packet_.rtt_ms_ = bandwidth_estimation_->round_trip_time().ms();
+      rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_ = GetFinalEstimationRate();
+      rl_based_bwe_->rl_packet_.loss_rate_ = bandwidth_estimation_->fraction_loss();
+      rl_based_bwe_->rl_packet_.gcc_bps_ = bandwidth_estimation_->target_rate().bps();
+      if(acknowledged_bitrate.has_value()){
+        rl_based_bwe_->rl_packet_.recv_throughput_bps_ = acknowledged_bitrate.value().bps();
+      }
+      rl_based_bwe_->rl_packet_.inter_packet_delay_ms_ = delay_based_bwe_->get_recv_delta_ms()-delay_based_bwe_->get_send_delta_ms();
+      rl_based_bwe_->rl_packet_.last_encoded_rate_bps_ = GetLastEncoderRate().reals_encode_bitrate_bps;
+      rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastEncoderRate().sent_video_rate_bps;
+      // rl_based_bwe_->rl_packet_.last_pacing_rate_bps_ = GetLastPacingRate();
+
+      RTC_LOG(LS_INFO)  << " get_rl_input_time_ms_: "            << rl_based_bwe_->rl_packet_.get_rl_input_time_ms_
+                        << " rtt_ms_: "                          << rl_based_bwe_->rl_packet_.rtt_ms_
+                        << " last_final_estimation_rate_bps_: "  << rl_based_bwe_->rl_packet_.last_final_estimation_rate_bps_
+                        << " loss_rate_: "                       << rl_based_bwe_->rl_packet_.loss_rate_
+                        << " gcc_bps: "                          << rl_based_bwe_->rl_packet_.gcc_bps_
+                        << " recv_throughput_bps_: "             << rl_based_bwe_->rl_packet_.recv_throughput_bps_
+                        << " inter_packet_delay_ms_: "           << rl_based_bwe_->rl_packet_.inter_packet_delay_ms_
+                        << " last_encoded_rate_bps_: "           << rl_based_bwe_->rl_packet_.last_encoded_rate_bps_
+                        << " last_pacing_rate_bps_: "            << rl_based_bwe_->rl_packet_.last_pacing_rate_bps_;
+
+      rl_based_bwe_->SendToRL(rl_based_bwe_->rl_packet_, RL_Socket);
+    }
     // Update the estimate in the ProbeController, in case we want to probe.
     MaybeTriggerOnNetworkChanged(&update, report.feedback_time);
   }

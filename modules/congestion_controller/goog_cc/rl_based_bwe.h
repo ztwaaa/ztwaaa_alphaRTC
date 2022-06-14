@@ -24,7 +24,7 @@ public:
     struct DataPacket{
         DataPacket();
         DataPacket( int64_t get_rl_input_time_ms, float rtt_ms, float lost_per_sec,
-                    uint8_t loss_rate, int64_t recv_throughput_bps,
+                    uint8_t loss_rate, int64_t gcc_bps_, int64_t recv_throughput_bps,
                     float retrans_num, int64_t last_final_estimation_rate_bps, float inter_packet_delay_ms,
                     int last_encoded_rate_bps, uint32_t last_pacing_rate_bps);
         ~DataPacket() = default;
@@ -33,12 +33,14 @@ public:
         float rtt_ms_;
         float lost_per_sec; // 每秒丢帧数
         uint8_t loss_rate_; // loss rate
+        int64_t gcc_bps_; 
         int64_t recv_throughput_bps_; 
         float retrans_num;
         int64_t last_final_estimation_rate_bps_;
         float inter_packet_delay_ms_; // delta time
         int last_encoded_rate_bps_;
         uint32_t last_pacing_rate_bps_;
+
     };
 
     struct Result {
