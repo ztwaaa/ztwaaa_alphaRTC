@@ -983,6 +983,8 @@ void SendStatisticsProxy::OnSendEncodedImage(
                                          VideoFrameType::kVideoFrameKey);
 
   if (encoded_image.qp_ != -1) {
+    stats_.qp_ = encoded_image.qp_;
+
     if (!stats->qp_sum)
       stats->qp_sum = 0;
     *stats->qp_sum += encoded_image.qp_;

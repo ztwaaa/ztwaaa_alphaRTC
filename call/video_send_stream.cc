@@ -65,6 +65,7 @@ std::string VideoSendStream::Stats::ToString(int64_t time_ms) const {
   char buf[2048];
   rtc::SimpleStringBuilder ss(buf);
   ss << "VideoSendStream stats: " << time_ms << ", {";
+  ss << "qp: " << qp_ << ", ";
   ss << "input_fps: " << input_frame_rate << ", ";
   ss << "encode_fps: " << encode_frame_rate << ", ";
   ss << "encode_ms: " << avg_encode_time_ms << ", ";

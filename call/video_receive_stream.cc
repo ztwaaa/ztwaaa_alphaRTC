@@ -68,6 +68,7 @@ std::string VideoReceiveStream::Stats::ToString(int64_t time_ms) const {
   ss << "nack: " << rtcp_packet_type_counts.nack_packets << ", ";
   ss << "fir: " << rtcp_packet_type_counts.fir_packets << ", ";
   ss << "pli: " << rtcp_packet_type_counts.pli_packets;
+  ss << "qp: " << qp_;
   ss << '}';
   return ss.str();
 }

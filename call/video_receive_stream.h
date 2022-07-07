@@ -149,6 +149,7 @@ class VideoReceiveStream {
     // Timing frame info: all important timestamps for a full lifetime of a
     // single 'timing frame'.
     absl::optional<webrtc::TimingFrameInfo> timing_frame_info;
+    int qp_ = 0;
   };
 
   struct Config {

@@ -669,8 +669,11 @@ RLBweParams VideoSendStreamImpl::OnEncodedBitrateUpdated(BitrateAllocationUpdate
   RLBweParams rl_bwe_params;
 
   rl_bwe_params.is_video_send = 1;
+  // 发送端outbound参数
+  VideoSendStream::Stats send_report = stats_proxy_->GetStats();
+  RTC_LOG(LS_INFO) << "VideoSendStream::Stats: " << send_report.ToString(clock_->TimeInMilliseconds());
   
-  rl_bwe_params.reals_encode_bitrate_bps = stats_proxy_->GetStats().media_bitrate_bps;
+  rl_bwe_params.reals_encode_bitrate_bps = send_report.media_bitrate_bps;
   rl_bwe_params.sent_video_rate_bps = sent_video_rate_bps_;
   rl_bwe_params.target_encode_rate_bps = encoder_target_rate_bps_;
 

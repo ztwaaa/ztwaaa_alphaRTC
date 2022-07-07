@@ -502,6 +502,9 @@ void VideoReceiveStream2::OnFrame(const VideoFrame& video_frame) {
                                            estimated_freq_khz);
         }
         stats_proxy_.OnRenderedFrame(frame_meta);
+        // 接收端inbound参数
+        VideoReceiveStream::Stats recv_report = GetStats();
+        RTC_LOG(LS_INFO) << "VideoReceiveStream::Stats: " << recv_report.ToString(clock_->TimeInMilliseconds());
       }));
 
   source_tracker_.OnFrameDelivered(video_frame.packet_infos());

@@ -137,6 +137,8 @@ class VideoSendStream {
         webrtc::VideoContentType::UNSPECIFIED;
     uint32_t frames_sent = 0;
     uint32_t huge_frames_sent = 0;
+
+    int qp_ = 0;
   };
 
   struct Config {

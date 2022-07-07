@@ -854,6 +854,8 @@ void ReceiveStatisticsProxy::OnDecodedFrame(
       &content_specific_stats_[content_type];
 
   ++stats_.frames_decoded;
+  stats_.qp_ = *qp;
+
   if (qp) {
     if (!stats_.qp_sum) {
       if (stats_.frames_decoded != 1) {
