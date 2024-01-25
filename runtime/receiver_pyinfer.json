@@ -7,7 +7,7 @@
         "receiver": {
             "enabled": true,
             "listening_ip": "192.168.6.114",
-            "listening_port": 66666
+            "listening_port": 66665
         }
     },
     
