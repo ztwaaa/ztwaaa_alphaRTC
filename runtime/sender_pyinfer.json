@@ -20,7 +20,7 @@
     "bwe_feedback_duration": 200,
     "video_source": {
         "video_disabled": {
-            "enabled": false
+            "enabled": true
         },
         "webcam": {
             "enabled": false

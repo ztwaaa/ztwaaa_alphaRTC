@@ -1,0 +1,52 @@
+{
+    "serverless_connection": {
+        "autoclose": 120,
+        
+        "sender": {
+            "enabled": true,
+            "dest_ip": "10.0.0.3",
+            "dest_port": 8000
+        },
+        "receiver": {
+            "enabled": false
+        }
+    },
+    
+    "bwe_algo": "rlcc",
+    "socket_config": {
+        "socket_server_ip": "192.168.44.39",
+        "socket_server_port": 1234
+    },
+
+    "bwe_feedback_duration": 200,
+    "video_source": {
+        "video_disabled": {
+            "enabled": false
+        },
+        "webcam": {
+            "enabled": false
+        },
+        "video_file": {
+            "enabled": true,
+            "height": 1080,
+            "width": 1920,
+            "fps": 30,
+            "file_path": "../../../Resources/testmedia/Video_enhance.yuv"
+        }
+    },
+    "audio_source": {
+        "microphone": {
+            "enabled": false
+        },
+        "audio_file": {
+            "enabled": false,
+            "file_path": "testmedia/test.wav"
+        }
+    },
+    "save_to_file": {
+        "enabled": false
+    },
+    "logging": {
+        "enabled": false
+    }
+}
