@@ -1,20 +1,20 @@
 {   
     "serverless_connection": {
-        "autoclose": 4000,
+        "autoclose": 0,
         "sender": {
             "enabled": false
         },
         "receiver": {
             "enabled": true,
-            "listening_ip": "192.168.6.114",
-            "listening_port": 66665
+            "listening_ip": "127.0.0.1",
+            "listening_port": 8000
         }
     },
     
-    "bwe_algo": "rlcc",
+    "bwe_algo": "gcc",
     "socket_config": {
         "socket_server_ip": "127.0.0.1",
-        "socket_server_port": 4321
+        "socket_server_port": 6000
     },
 
     "bwe_feedback_duration": 200,
@@ -23,27 +23,27 @@
             "enabled": false
         },
         "webcam": {
-            "enabled": true
+            "enabled": false
         },
         "video_file": {
-            "enabled": false,
+            "enabled": true,
             "height": 240,
             "width": 320,
             "fps": 10,
-            "file_path": "testmedia/test.yuv"
+            "file_path": "F:\\AlphaRTC\\runtime\\testmedia\\test.yuv"
         }
     },
     "audio_source": {
         "microphone": {
-            "enabled": true
+            "enabled": false
         },
         "audio_file": {
             "enabled": false,
-            "file_path": "testmedia/test.wav"
+            "file_path": "testmedia/test.yuv"
         }
     },
     "save_to_file": {
-        "enabled": true,
+        "enabled": false,
         "audio": {
             "file_path": "outaudio.wav"
         },
@@ -56,6 +56,6 @@
     },
     "logging": {
         "enabled": true,
-        "log_output_path": "webrtc.log"
+        "log_output_path": "debug3.log"
     }
 }

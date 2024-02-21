@@ -6,8 +6,8 @@
         },
         "receiver": {
             "enabled": true,
-            "listening_ip": "192.168.6.114",
-            "listening_port": 6666
+            "listening_ip": "127.0.0.1",
+            "listening_port": 6000
         }
     },
     "bwe_feedback_duration": 200,

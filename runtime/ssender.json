@@ -4,7 +4,7 @@
         "sender": {
             "enabled": true,
             "dest_ip": "127.0.0.1",
-            "dest_port": 6666
+            "dest_port": 6000
         },
         "receiver": {
             "enabled": false

@@ -163,7 +163,7 @@ RL server用于响应AlphaRTC的带宽估计请求，负责RL网络推理和记�
 
 在RL server上启动MetaCC 进程：
 
-- 修改 `AlphaRTC\runtimereceiver_pyinfer.json`和`AlphaRTC\runtimesender_pyinfer.json`中主机ip地址为RL server地址
+- 修改 `AlphaRTC\runtime\receiver_pyinfer.json`和`AlphaRTC\runtime\sender_pyinfer.json`中主机ip地址为RL server地址
 - 运行ppo_solution的`main.py`. 开启两个MetaCC进程：一个服务receiver一个服务sender.
 - 参数是：1. socket ip（可以是127.0.0.1，但如果要被所在网络其它机器访问则设置为本机在该网络的ip） 2. 端口
 
